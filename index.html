@@ -5,10 +5,62 @@
     <meta charset="UTF-8">
     <title>JiBaJiBa</title>
     <style>
-        video { width: 100%; max-width: 720px; }
-        .controls { margin: 20px 0; }
-        .status { margin: 10px 0; color: #666; }
+        .container {
+            display: flex;
+        }
+        video { width: 100%; height: 60%;}
+        .status { margin: 10px 10px; color: #666; width: 100%;}
+        .title_ , .search_ , .empty{
+            flex: auto;
+        }
+        :root {
+            --primary-color: #0F0F0F;
+            --secondary-color: #272727;
+            --light-color: #F1F1F1;
+            --caution-color: #FF0033
+        }
         
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--light-color);
+            background-color: var(--primary-color);
+            padding: 20px;
+        }
+
+        .controls {
+            background: var(--primary-color);
+            width: 80%;
+            height: 50px;
+            margin: 20px 0;
+            overflow: hidden;
+            border-style:solid;
+            border-width: 0px;
+            border-radius: 5px;
+        }
+
+        .title_ {
+            background: var(--primary-color);
+            width: 30%;
+            overflow: hidden;
+            margin: 20px 0;
+            font-size: xx-large;
+        }
+
+        .search_ {
+            background-color: var(--primary-color);
+            width: 40%;
+            overflow: hidden;
+            margin: 20px 0;
+            
+        }
+        .empty {
+            width: 30%;
+        }
+        .empty_ {
+            width: 100%;
+        }
+
         /* 全屏样式 */
         .fullscreen-mode {
             position: fixed;
@@ -65,26 +117,110 @@
             margin: 10px 0;
             border-radius: 5px;
         }
+        .text_enter {
+            width: 85%; 
+            height: 30px;
+            margin: 10px 5px;
+            border-style:solid;
+            border-width: 1px;
+            border-radius: 10px;
+            background-color: var(--primary-color);
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
+        }
+        .button_s {
+            width: 10%;
+            float: right;
+            height: 35px;
+            margin: 10px 5px;
+            border-style:solid;
+            border-width: 0px;
+            border-radius: 10px;
+            background-color: var(--secondary-color);
+            color: var(--light-color);
+        }
+        .button_l {
+            width: 7%;
+            float: left;
+            height: 30px;
+            margin: 10px 5px;
+            border-style:solid;
+            border-width: 0px;
+            border-radius: 10px;
+            background-color: var(--light-color);
+            color: var(--primary-color);
+        }
+        .button_r {
+            width: 7%;
+            float: right;
+            height: 30px;
+            margin: 10px 5px;
+            border-style:solid;
+            border-width: 0px;
+            border-radius: 10px;
+            background-color: var(--secondary-color);
+            color: var(--light-color);
+        }
+        .main_ {
+            width: 100%;
+            color: var(--secondary-color);
+        }
+        .player {
+            width: 80%;
+        }
+        .buttons {
+            width: 20%;
+            color: var(--secondary-color);
+        }
+        .button_play {
+            width: 90%;
+            height: 100px;
+            margin: 5px 5px;
+            color: var(--light-color);
+            background: var(--primary-color);
+            border-color: var(--secondary-color);
+            border-style:solid;
+            border-width: 1px;
+            border-radius: 10px;
+            text-align: left;
+            font-size: medium;
+        }
+        .player,.buttons {
+            float: left;
+        }
+        .head_img{
+            height: 80px;
+            border-radius: 100%;
+        }
     </style>
 </head>
 <body>
     <div class="browser-warning" id="browserWarning"></div>
     
-    <h1>JiBaJiBa</h1>
-    <div>
-        <input type="text" placeholder="输入URL" id="userenter" value="">
-        <button onclick="connect_URL()">连接</button>
+    <div class="container">
+        <div class="title_"><img src="https://github.com/JOYG0322/bvvd_see_what/blob/main/assets/icon.png?raw=true">JiBaJiBa</div>
+        <div class="search_">
+            <input type="text" placeholder="输入URL" id="userenter" value="" class="text_enter">
+            <button onclick="connect_URL()" class="button_s">连接</button>
+        </div>
+        <div class="empty"></div>
     </div>
-
-    <div id="videoContainer">
-        <video id="remoteVideo" autoplay controls muted playsinline></video>
+    <div class="main_">
+        <div id="videoContainer">
+            <video id="remoteVideo" autoplay controls muted playsinline class="player"></video>
+        </div>
+        <div class="buttons">
+            <button onclick="connect_CMHH()" class="button_play"><img src="https://i1.hdslb.com/bfs/face/e63d4246819688996c23d18a3d9d978bef57f74c.jpg@150w_150h.jpg" class="head_img">[直播]Chaoji_Mouse</button>
+            <button onclick="connect_JOYG()" class="button_play"><img src="https://i0.hdslb.com/bfs/face/9d09d2e26423993a6ada3223899b3e93f3166198.jpg@128w_128h_1c_1s.webp" class="head_img">[直播]JOYG</button>
+            <button onclick="connect_CBL()" class="button_play"><img src="https://i0.hdslb.com/bfs/face/fa2109f2ef9e6e9e1711bfe1a37d01b3560697e0.jpg@128w_128h_1c_1s.webp" class="head_img">[直播]王灿</button>
+        </div>
+        <div class="empty_"></div>
     </div>
     <div class="status" id="status">未连接</div>
     <div class="controls">
-        <button onclick="connect_JOYG()">连接JOYG</button>
-        <button onclick="connect_CMHH()">连接CMHH</button>
-        <button onclick="disconnect()">断开</button>
-        <button onclick="toggleFullscreen()">网页全屏</button>
+        <button onclick="connect_ref()" class="button_l">刷新</button>
+        <button onclick="disconnect()" class="button_r">断开</button>
+        <button onclick="toggleFullscreen()" class="button_r">全屏</button>
     </div>
 
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
