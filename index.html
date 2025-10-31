@@ -92,7 +92,11 @@
         let isFullscreen = false;
         const whepUrl_JOYG = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=JOYG';
         const whepUrl_CMHH = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=CMHH';
-        var whepUrl_URL = ""
+        
+        // 获取文本框值
+        function getTextBoxValue() {
+            return document.getElementById('userenter').value;
+        }
         
         // 浏览器检测和警告
         function detectBrowser() {
@@ -337,7 +341,7 @@
         async function connect_CMHH() {
             try {
                 updateStatus('正在连接CMHH...');
-                var whepUrl_URL = getTextBoxValue()
+                
                 // 先断开现有连接
                 if (pc) {
                     pc.close();
@@ -412,7 +416,7 @@
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 10000);
                     
-                    const response = await fetch(whepUrl_URL, {
+                    const response = await fetch(whepUrl_CMHH, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/sdp'
@@ -465,9 +469,17 @@
                 }
             }
         }
+        
         async function connect_URL() {
             try {
                 updateStatus('正在连接URL...');
+                
+                // 获取用户输入的URL
+                const userUrl = getTextBoxValue();
+                if (!userUrl) {
+                    updateStatus('请输入URL地址');
+                    return;
+                }
                 
                 // 先断开现有连接
                 if (pc) {
@@ -548,8 +560,8 @@
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
                     
-                    // 发送 offer 到 WHEP 服务器
-                    const response = await fetch(whepUrl_JOYG, {
+                    // 发送 offer 到用户输入的 WHEP 服务器
+                    const response = await fetch(userUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/sdp'
