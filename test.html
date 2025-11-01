@@ -91,6 +91,7 @@ body {
 
 video {
     width: 100%;
+    height: calc(100vh - 220px); /* 使视频尽量填满高度，右侧不变 */
     border-radius: 10px;
     background: #000;
 }
@@ -179,7 +180,38 @@ video {
     </div>
 </div>
 
-<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+<script src="https://webrtc.github.io/adapter/adapter-latest.js">// 频道按钮调用（修复报错）
+function connect_JOYG() { connectStream(whepUrl_JOYG); }
+function connect_CMHH() { connectStream(whepUrl_CMHH); }
+function connect_PL() { connectStream(whepUrl_PL); }
+
+// C: 实时状态（延迟 / 码率 / FPS / 丢包率）
+setInterval(async () => {
+    if (!pc || pc.connectionState !== 'connected') return;
+    const stats = await pc.getStats();
+    let fps = 0, bitrate = 0, rtt = 0, loss = 0;
+
+    stats.forEach(report => {
+        if (report.type === 'inbound-rtp' && report.kind === 'video') {
+            if (report.framesPerSecond) fps = report.framesPerSecond;
+            if (report.bytesReceived && report.timestamp) {
+                if (!window._lastBytes) window._lastBytes = report.bytesReceived;
+                bitrate = ((report.bytesReceived - window._lastBytes) * 8 / 1024 / 1024).toFixed(2);
+                window._lastBytes = report.bytesReceived;
+            }
+            if (report.packetsLost && report.packetsReceived) {
+                loss = (report.packetsLost / (report.packetsLost + report.packetsReceived) * 100).toFixed(2);
+            }
+        }
+        if (report.type === 'candidate-pair' && report.currentRoundTripTime) {
+            rtt = (report.currentRoundTripTime * 1000).toFixed(0);
+        }
+    });
+
+    updateStatus(`延迟: ${rtt}ms | 码率: ${bitrate}Mbps | FPS: ${fps} | 丢包率: ${loss}%`);
+}, 1000);
+
+</script>
 <script>
 let pc = null;              // WebRTC PeerConnection 对象
 let currentWhepUrl = null;   // 记录当前连接流 URL
