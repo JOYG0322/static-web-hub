@@ -5,11 +5,14 @@
     <meta charset="UTF-8">
     <title>JiBaJiBa</title>
     <style>
+        .mobile-device .main_ {
+            flex-direction: column;
+        }
         .container {
             display: flex;
         }
         video { width: 100%; height: 60%;}
-        .status { margin: 10px 10px; color: #666; width: 100%;}
+        .status { margin: 10px 10px; color: #666; width: 80%;}
         .title_ , .search_ , .empty{
             flex: auto;
         }
@@ -30,13 +33,14 @@
 
         .controls {
             background: var(--primary-color);
-            width: 80%;
+            width: 100%;
             height: 50px;
             margin: 20px 0;
             overflow: hidden;
             border-style:solid;
             border-width: 0px;
             border-radius: 5px;
+            min-width: 480px;
         }
 
         .title_ {
@@ -45,6 +49,7 @@
             overflow: hidden;
             margin: 20px 0;
             font-size: xx-large;
+            min-width: 180px;
         }
 
         .search_ {
@@ -52,6 +57,7 @@
             width: 40%;
             overflow: hidden;
             margin: 20px 0;
+            min-width: 360px;
             
         }
         .empty {
@@ -59,6 +65,7 @@
         }
         .empty_ {
             width: 100%;
+            background-color: var(--secondary-color);
         }
 
         /* 全屏样式 */
@@ -118,9 +125,9 @@
             border-radius: 5px;
         }
         .text_enter {
-            width: 85%; 
+            width: 80%; 
             height: 30px;
-            margin: 10px 5px;
+            margin: 10px 1.5%;
             border-style:solid;
             border-width: 1px;
             border-radius: 10px;
@@ -132,12 +139,13 @@
             width: 10%;
             float: right;
             height: 35px;
-            margin: 10px 5px;
+            margin: 10px 1.5%;
             border-style:solid;
             border-width: 0px;
             border-radius: 10px;
             background-color: var(--secondary-color);
             color: var(--light-color);
+            min-width: 45px;
         }
         .button_l {
             width: 7%;
@@ -149,6 +157,7 @@
             border-radius: 10px;
             background-color: var(--light-color);
             color: var(--primary-color);
+            min-width: 45px;
         }
         .button_r {
             width: 7%;
@@ -160,13 +169,16 @@
             border-radius: 10px;
             background-color: var(--secondary-color);
             color: var(--light-color);
+            min-width: 45px;
         }
         .main_ {
             width: 100%;
-            color: var(--secondary-color);
+            background-color: var(--primary-color);
+            display: flex;
         }
         .player {
-            width: 80%;
+            width: 100%;
+            min-width: 360px;
         }
         .buttons {
             width: 20%;
@@ -183,15 +195,85 @@
             border-width: 1px;
             border-radius: 10px;
             text-align: left;
-            font-size: medium;
-        }
-        .player,.buttons {
-            float: left;
+            font-size: small;
+            min-width: 250px;
         }
         .head_img{
             height: 80px;
             border-radius: 100%;
         }
+        .videoContainer {
+            width: 80%;
+            min-width: 480px;
+            background-color: var(--primary-color);
+        }
+        .buttons, .videoContainer {
+            float: left;
+        }
+
+                /* 移动设备响应式布局 */
+        @media (max-width: 768px) {
+            .main_ {
+                flex-direction: column;
+            }
+            
+            .videoContainer {
+                width: 100%;
+                min-width: 100%;
+                order: 1; /* 确保视频在上面 */
+            }
+            
+            .buttons {
+                width: 100%;
+                order: 2; /* 按钮在下面 */
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .button_play {
+                width: 95%;
+                min-width: 95%;
+                margin: 5px auto;
+            }
+            
+            .head_img {
+                height: 60px;
+            }
+            
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .title_, .search_, .empty {
+                width: 100%;
+                text-align: center;
+                margin: 10px 0;
+            }
+            
+            .search_ {
+                min-width: 100%;
+            }
+            
+            .text_enter {
+                width: 70%;
+            }
+            
+            .button_s {
+                width: 20%;
+            }
+            
+            video {
+                height: auto;
+                max-height: 50vh;
+            }
+            
+            .controls {
+                min-width: 100%;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -206,22 +288,22 @@
         <div class="empty"></div>
     </div>
     <div class="main_">
-        <div id="videoContainer">
+        <div id="videoContainer" class="videoContainer">
             <video id="remoteVideo" autoplay controls muted playsinline class="player"></video>
+            <div class="status" id="status">未连接</div>
+            <div class="controls">
+                <button onclick="connect_ref()" class="button_l">刷新</button>
+                <button onclick="disconnect()" class="button_r">断开</button>
+                <button onclick="toggleFullscreen()" class="button_r">全屏</button>
+            </div>
         </div>
         <div class="buttons">
             <button onclick="connect_CMHH()" class="button_play"><img src="https://i1.hdslb.com/bfs/face/e63d4246819688996c23d18a3d9d978bef57f74c.jpg@150w_150h.jpg" class="head_img">[直播]Chaoji_Mouse</button>
             <button onclick="connect_JOYG()" class="button_play"><img src="https://i0.hdslb.com/bfs/face/9d09d2e26423993a6ada3223899b3e93f3166198.jpg@128w_128h_1c_1s.webp" class="head_img">[直播]JOYG</button>
-            <button onclick="connect_CBL()" class="button_play"><img src="https://i0.hdslb.com/bfs/face/fa2109f2ef9e6e9e1711bfe1a37d01b3560697e0.jpg@128w_128h_1c_1s.webp" class="head_img">[直播]王灿</button>
+            <button onclick="connect_PL()" class="button_play"><img src="https://i0.hdslb.com/bfs/face/fa2109f2ef9e6e9e1711bfe1a37d01b3560697e0.jpg@128w_128h_1c_1s.webp" class="head_img">[直播]Pure1ove</button>
         </div>
-        <div class="empty_"></div>
     </div>
-    <div class="status" id="status">未连接</div>
-    <div class="controls">
-        <button onclick="connect_ref()" class="button_l">刷新</button>
-        <button onclick="disconnect()" class="button_r">断开</button>
-        <button onclick="toggleFullscreen()" class="button_r">全屏</button>
-    </div>
+    
 
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script>
@@ -229,7 +311,14 @@
         let isFullscreen = false;
         const whepUrl_JOYG = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=JOYG';
         const whepUrl_CMHH = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=CMHH';
-        
+        const whepUrl_PL = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=PL';
+        var whepUrl_ref = ''
+
+        function isMobileDevice() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const mobileRegex = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|windows phone|phone|webos|kindle|tablet/i;
+            return mobileRegex.test(ua.toLowerCase());
+        }
         // 获取文本框值
         function getTextBoxValue() {
             return document.getElementById('userenter').value;
@@ -250,10 +339,30 @@
                 warningElement.style.display = 'block';
             }
         }
+
+                // 移动设备检测和布局调整
+        function adjustLayoutForMobile() {
+            if (isMobileDevice()) {
+                document.body.classList.add('mobile-device');
+                updateStatus('移动设备模式 - 垂直布局');
+            }
+        }
+
+        // 页面加载时检测并调整布局
+        window.addEventListener('load', function() {
+            adjustLayoutForMobile();
+        });
+
+        // 窗口大小改变时也检测
+        window.addEventListener('resize', function() {
+            adjustLayoutForMobile();
+        });
         
         // 页面加载时检测浏览器
         detectBrowser();
         
+
+
         function updateStatus(message) {
             document.getElementById('status').textContent = message;
             console.log(message);
@@ -352,6 +461,7 @@
         async function connect_JOYG() {
             try {
                 updateStatus('正在连接JOYG...');
+                var whepUrl_ref = whepUrl_JOYG;
                 
                 // 先断开现有连接
                 if (pc) {
@@ -372,6 +482,7 @@
                     remoteVideo.srcObject = e.streams[0];
                     
                     // Firefox 特殊处理
+                    // [ntd]Firefox 无法正常使用，考虑是否保留针对Firefox的优化
                     if (navigator.userAgent.includes('Firefox')) {
                         remoteVideo.play().catch(err => {
                             console.warn('Firefox 自动播放被阻止:', err);
@@ -475,9 +586,137 @@
             }
         }
 
+        async function connect_PL() {
+            try {
+                updateStatus('正在连接PL...');
+                var whepUrl_ref = whepUrl_PL
+                
+                // 先断开现有连接
+                if (pc) {
+                    pc.close();
+                    pc = null;
+                }
+                
+                pc = new RTCPeerConnection({
+                    iceServers: getIceServers(),
+                    iceTransportPolicy: 'all',
+                    bundlePolicy: 'max-bundle',
+                    rtcpMuxPolicy: 'require'
+                });
+                
+                pc.ontrack = e => {
+                    updateStatus('已接收到视频流');
+                    const remoteVideo = document.getElementById('remoteVideo');
+                    remoteVideo.srcObject = e.streams[0];
+                    
+                    // Firefox 特殊处理
+                    if (navigator.userAgent.includes('Firefox')) {
+                        remoteVideo.play().catch(err => {
+                            console.warn('Firefox 自动播放被阻止:', err);
+                            updateStatus('Firefox: 请点击视频播放按钮');
+                        });
+                    }
+                };
+                
+                // 监听连接状态
+                pc.onconnectionstatechange = () => {
+                    const state = pc.connectionState;
+                    updateStatus('连接状态: ' + state);
+                    
+                    if (state === 'connected') {
+                        updateStatus('连接成功！');
+                    } else if (state === 'failed') {
+                        updateStatus('连接失败，请重试或使用 Chrome 浏览器');
+                    }
+                };
+                
+                pc.oniceconnectionstatechange = () => {
+                    updateStatus('ICE连接状态: ' + pc.iceConnectionState);
+                };
+                
+                // ICE 收集状态
+                pc.onicegatheringstatechange = () => {
+                    console.log('ICE gathering state:', pc.iceGatheringState);
+                };
+                
+                // ICE 候选信息
+                pc.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        console.log('ICE candidate:', event.candidate.candidate);
+                    } else {
+                        console.log('ICE gathering complete');
+                    }
+                };
+                
+                // 创建 offer - Firefox 兼容性改进
+                const transceiverVideo = pc.addTransceiver('video', { direction: 'recvonly' });
+                const transceiverAudio = pc.addTransceiver('audio', { direction: 'recvonly' });
+                
+                // 设置更好的编解码器偏好（Firefox 可能需要）
+                try {
+                    const offer = await pc.createOffer();
+                    
+                    // 修改 SDP 以改善兼容性
+                    let sdp = offer.sdp;
+                    
+                    // 添加 Firefox 兼容性改进
+                    if (navigator.userAgent.includes('Firefox')) {
+                        sdp = sdp.replace(/a=group:BUNDLE 0 1/g, 'a=group:BUNDLE 0');
+                    }
+                    
+                    await pc.setLocalDescription({ type: 'offer', sdp: sdp });
+                    
+                    // 延长超时时间，特别是对于 Firefox
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+                    
+                    // 发送 offer 到 WHEP 服务器
+                    const response = await fetch(whepUrl_PL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/sdp'
+                        },
+                        body: sdp,
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // 设置服务器返回的 answer
+                    const answerSdp = await response.text();
+                    await pc.setRemoteDescription({
+                        type: 'answer',
+                        sdp: answerSdp
+                    });
+                    
+                    updateStatus('连接建立成功，等待视频流...');
+                    
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        throw new Error('连接超时，请检查网络或服务器状态');
+                    }
+                    throw error;
+                }
+                
+            } catch (error) {
+                updateStatus('连接失败: ' + error.message);
+                console.error('连接错误:', error);
+                
+                // Firefox 特定建议
+                if (navigator.userAgent.includes('Firefox')) {
+                    updateStatus('Firefox 用户建议: 尝试刷新页面或使用 Chrome 浏览器');
+                }
+            }
+        }
+
         async function connect_CMHH() {
             try {
                 updateStatus('正在连接CMHH...');
+                var whepUrl_ref = whepUrl_CMHH;
                 
                 // 先断开现有连接
                 if (pc) {
@@ -607,6 +846,139 @@
             }
         }
         
+        async function connect_ref() {
+            try {
+                updateStatus('正在连接ref...');
+                var whepUrl_ref = whepUrl_ref;
+                
+                // 先断开现有连接
+                if (pc) {
+                    pc.close();
+                    pc = null;
+                }
+                
+                pc = new RTCPeerConnection({
+                    iceServers: getIceServers(),
+                    iceTransportPolicy: 'all',
+                    bundlePolicy: 'max-bundle',
+                    rtcpMuxPolicy: 'require'
+                });
+                
+                pc.ontrack = e => {
+                    updateStatus('已接收到视频流');
+                    const remoteVideo = document.getElementById('remoteVideo');
+                    remoteVideo.srcObject = e.streams[0];
+                    
+                    // Firefox 特殊处理
+                    if (navigator.userAgent.includes('Firefox')) {
+                        remoteVideo.play().catch(err => {
+                            console.warn('Firefox 自动播放被阻止:', err);
+                            updateStatus('Firefox: 请点击视频播放按钮');
+                        });
+                    }
+                };
+                
+                pc.onconnectionstatechange = () => {
+                    const state = pc.connectionState;
+                    updateStatus('连接状态: ' + state);
+                    
+                    if (state === 'connected') {
+                        updateStatus('连接成功！');
+                    } else if (state === 'failed') {
+                        updateStatus('连接失败，请重试或使用 Chrome 浏览器');
+                    }
+                };
+                
+                pc.oniceconnectionstatechange = () => {
+                    updateStatus('ICE连接状态: ' + pc.iceConnectionState);
+                };
+                
+                // ICE 收集状态
+                pc.onicegatheringstatechange = () => {
+                    console.log('ICE gathering state:', pc.iceGatheringState);
+                };
+                
+                // ICE 候选信息
+                pc.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        console.log('ICE candidate:', event.candidate.candidate);
+                    } else {
+                        console.log('ICE gathering complete');
+                    }
+                };
+                
+                const transceiverVideo = pc.addTransceiver('video', { direction: 'recvonly' });
+                const transceiverAudio = pc.addTransceiver('audio', { direction: 'recvonly' });
+                
+                try {
+                    const offer = await pc.createOffer();
+                    
+                    let sdp = offer.sdp;
+                    
+                    // 添加 Firefox 兼容性改进
+                    if (navigator.userAgent.includes('Firefox')) {
+                        sdp = sdp.replace(/a=group:BUNDLE 0 1/g, 'a=group:BUNDLE 0');
+                    }
+                    
+                    await pc.setLocalDescription({ type: 'offer', sdp: sdp });
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    
+                    const response = await fetch(whepUrl_ref, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/sdp'
+                        },
+                        body: sdp,
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const answerSdp = await response.text();
+                    await pc.setRemoteDescription({
+                        type: 'answer',
+                        sdp: answerSdp
+                    });
+                    
+                    updateStatus('连接建立成功，等待视频流...');
+                    
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        throw new Error('连接超时，请检查网络或服务器状态');
+                    }
+                    throw error;
+                }
+                
+            } catch (error) {
+                updateStatus('连接失败: ' + error.message);
+                console.error('连接错误:', error);
+                
+                if (navigator.userAgent.includes('Firefox')) {
+                    updateStatus('Firefox 用户建议: 尝试刷新页面或使用 Chrome 浏览器');
+                }
+            }
+        }
+        
+        function disconnect() {
+            if (pc) {
+                pc.close();
+                pc = null;
+                updateStatus('已断开连接');
+                document.getElementById('remoteVideo').srcObject = null;
+                
+                // 如果正在全屏，也退出全屏
+                if (isFullscreen) {
+                    toggleFullscreen();
+                }
+            }
+        }
+
         async function connect_URL() {
             try {
                 updateStatus('正在连接URL...');
@@ -618,6 +990,7 @@
                     return;
                 }
                 
+                var whepUrl_ref = userUrl;
                 // 先断开现有连接
                 if (pc) {
                     pc.close();
