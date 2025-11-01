@@ -211,30 +211,31 @@
             float: left;
         }
 
-                /* 移动设备响应式布局 */
-        @media (max-width: 768px) {
+                        /* 移动设备响应式布局 */
+                /* 移动设备响应式布局 - 更精确的检测 */
+        @media (max-width: 768px), (hover: none) and (pointer: coarse) {
             .main_ {
-                flex-direction: column;
+                flex-direction: column !important;
             }
             
             .videoContainer {
-                width: 100%;
-                min-width: 100%;
-                order: 1; /* 确保视频在上面 */
+                width: 100% !important;
+                min-width: 100% !important;
+                order: 1;
             }
             
             .buttons {
-                width: 100%;
-                order: 2; /* 按钮在下面 */
+                width: 100% !important;
+                order: 2;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
             }
             
             .button_play {
-                width: 95%;
-                min-width: 95%;
-                margin: 5px auto;
+                width: 95% !important;
+                min-width: 95% !important;
+                margin: 5px auto !important;
             }
             
             .head_img {
@@ -247,13 +248,13 @@
             }
             
             .title_, .search_, .empty {
-                width: 100%;
+                width: 100% !important;
                 text-align: center;
                 margin: 10px 0;
             }
             
             .search_ {
-                min-width: 100%;
+                min-width: 100% !important;
             }
             
             .text_enter {
@@ -270,7 +271,7 @@
             }
             
             .controls {
-                min-width: 100%;
+                min-width: 100% !important;
             }
         }
 
@@ -343,7 +344,33 @@
                 // 移动设备检测和布局调整
         function adjustLayoutForMobile() {
             if (isMobileDevice()) {
+                console.log("检测到移动设备，应用移动布局");
                 document.body.classList.add('mobile-device');
+                
+                // 强制应用移动布局样式
+                const style = document.createElement('style');
+                style.textContent = `
+                    .mobile-device .main_ {
+                        flex-direction: column !important;
+                    }
+                    .mobile-device .videoContainer {
+                        width: 100% !important;
+                        min-width: 100% !important;
+                    }
+                    .mobile-device .buttons {
+                        width: 100% !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                    }
+                    .mobile-device .button_play {
+                        width: 95% !important;
+                        min-width: 95% !important;
+                        margin: 5px auto !important;
+                    }
+                `;
+                document.head.appendChild(style);
+                
                 updateStatus('移动设备模式 - 垂直布局');
             }
         }
