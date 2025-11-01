@@ -1,17 +1,8 @@
-<!-- JiBaJiBa WebRTC Player v3.0 (Bilibili Style UI) -->
-<!-- 功能注释：
-1. 保留 v2.0 优化后的核心逻辑（connectStream, currentWhepUrl, refresh, disconnect）
-2. UI 改为 Bilibili 风格（圆角、柔和阴影、卡片布局、按钮悬浮反馈）
-3. 未修改任何结构性逻辑，只增强视觉表现 + 更友好的控件布局
-4. 增加功能注释（不添加修改说明）
--->
-
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-<meta charset="UTF-8" />
-<title>JiBaJiBa</title>
-
+<meta charset="UTF-8">
+<title>JiBaJiBa v4.3 优化版</title>
 <style>
 :root {
     --bg-dark: #0f0f0f;
@@ -19,227 +10,308 @@
     --bg-hover: #2b2b2b;
     --text-main: #f1f1f1;
     --text-sub: #aaaaaa;
-    --accent: #00a1d6; /* B站主题蓝 */
+    --accent: #00a1d6;
 }
-
+* { box-sizing: border-box; }
 body {
+    margin:0; padding:15px;
     background: var(--bg-dark);
     color: var(--text-main);
     font-family: "Segoe UI", sans-serif;
-    padding: 15px;
 }
-
-/* 顶栏布局 */
-.container {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.title_ {
-    display: flex;
-    align-items: center;
-    font-size: 26px;
-    font-weight: bold;
-}
+.container { display:flex; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px; }
+.title_ { display:flex; align-items:center; font-size:26px; font-weight:bold; }
 .title_ img {
-    height: 38px;
-    margin-right: 10px;
-    border-radius: 8px;
+    height:38px; margin-right:10px; border-radius:8px;
+    transition: transform 0.2s ease;
 }
-
-/* 输入框 + 按钮 */
-.search_ {
-    margin-left: 20px;
-    display: flex;
-    flex: 1;
-}
-.text_enter {
-    flex: 1;
-    background: var(--bg-card);
-    border: 1px solid var(--bg-hover);
-    border-radius: 6px;
-    padding: 8px;
-    color: var(--text-main);
-}
-.button_s {
-    margin-left: 10px;
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: none;
-    background: var(--accent);
-    color: #fff;
+.title_ img:hover {
+    transform: scale(1.2);
     cursor: pointer;
 }
-.button_s:hover { background: #33b6e8; }
+.protocols { display:flex; gap:6px; flex-wrap:wrap; }
+.protocol-btn { padding:6px 12px; border-radius:6px; border:none; cursor:pointer; background:var(--bg-card); color:var(--text-main); transition:0.2s; }
+.protocol-btn.active { background:var(--accent); color:#fff; }
+.protocol-btn:hover { background:var(--bg-hover); }
 
-/* 主体区域 */
-.main_ {
-    display: flex;
-    margin-top: 18px;
-}
+.search_ { display:flex; flex:1; min-width:200px; }
+.text_enter { flex:1; background: var(--bg-card); border:1px solid var(--bg-hover); border-radius:6px; padding:8px; color:var(--text-main); }
+.button_s { margin-left:10px; padding:8px 14px; border-radius:6px; border:none; background:var(--accent); color:#fff; cursor:pointer; transition:0.2s; }
+.button_s:hover { background:#33b6e8; }
 
-/* 视频区卡片化 */
-.videoContainer {
-    flex: 3;
-    background: var(--bg-card);
-    border-radius: 10px;
-    padding: 12px;
-    margin-right: 18px;
-    box-shadow: 0 0 12px rgba(0,0,0,0.35);
-}
+.main_ { display:flex; gap:18px; margin-top:18px; height:calc(100vh - 80px); flex-wrap:wrap; }
+.videoContainer { flex:3; min-width:300px; background: var(--bg-card); border-radius:10px; padding:12px; box-shadow:0 0 12px rgba(0,0,0,0.35); display:flex; flex-direction:column; }
+video { width:100%; flex:1; border-radius:10px; background:#000; }
+.status { margin-top:6px; font-size:13px; color:var(--text-sub); }
+.controls { margin-top:10px; display:flex; gap: 6px; flex-wrap:wrap; }
+.button_l, .button_r { height: 30px; padding: 0 12px; border-radius:6px; border:none; cursor:pointer; font-size: 12px; transition:0.15s; }
+.button_l { background:var(--bg-hover); color:var(--text-main); }
+.button_r { background:var(--accent); color:white; }
+.button_l:hover, .button_r:hover { background:#33b6e8; transform: translateY(-1px); box-shadow:0 2px 6px rgba(0,0,0,0.3); }
 
-video {
-    width: 100%;
-    height: calc(100vh - 220px); /* 使视频尽量填满高度，右侧不变 */
-    border-radius: 10px;
-    background: #000;
-}
-
-.status {
-    margin-top: 6px;
-    font-size: 13px;
-    color: var(--text-sub);
-}
-
-.controls {
-    margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-}
-.button_l, .button_r {
-    flex: 1;
-    margin: 0 4px;
-    height: 38px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-}
-.button_l { background: var(--bg-hover); color: var(--text-main); }
-.button_r { background: var(--accent); color: white; }
-.button_r:hover { background: #33b6e8; }
-
-/* 频道列表区域 */
-.buttons {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
+.buttons { flex:1; min-width:220px; display:flex; flex-direction:column; overflow-y:auto; max-height:100%; }
+.section-title { font-size:14px; color:var(--text-main); margin:10px 0 4px 0; font-weight:bold; padding-left:6px; }
 
 .button_play {
-    display: flex;
-    align-items: center;
-    background: var(--bg-card);
-    border: none;
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 12px;
-    color: var(--text-main);
-    cursor: pointer;
-    transition: 0.15s;
+    display:flex; align-items:center; background:var(--bg-card); border:none; border-radius:10px; padding:10px; margin-bottom:6px;
+    color:var(--text-main); cursor:pointer; transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+    height:60px; width:100%; position:relative;
 }
-.button_play:hover { background: var(--bg-hover); }
+.button_play.manual { height:45px; }
+.button_play:hover { background: var(--bg-hover); transform: translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+.button_play:active { transform: translateY(0px); box-shadow:0 2px 6px rgba(0,0,0,0.3); }
 
-.head_img {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    margin-right: 10px;
+.head_img { width:48px; height:48px; border-radius:50%; margin-right:10px; }
+
+.url_text { font-size:11px; color:var(--text-sub); word-break: break-all; margin-left:58px; margin-top:-2px; }
+
+.delete_btn { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-main); font-weight:bold; cursor:pointer; font-size:inherit; transition: color 0.15s, transform 0.15s; }
+.delete_btn:hover { color:#ff4d4d; transform: scale(1.2); }
+
+.fullscreen-mode {
+    position: fixed; top:0; left:0; width:100vw; height:100vh; background:black; z-index:9999;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
 }
+.fullscreen-mode video { width:100%; height:100%; object-fit:contain; }
+.fullscreen-controls {
+    position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
+    background: rgba(0,0,0,0.7); padding:10px; border-radius:5px; z-index:10000;
+    opacity:1; transition: opacity 0.3s ease;
+}
+.fullscreen-controls.hidden { opacity:0; pointer-events:none; }
+.fullscreen-controls button { margin:0 5px; color:white; background: var(--bg-hover); border:none; padding:8px 15px; border-radius:3px; cursor:pointer; transition:0.15s; }
+.fullscreen-controls button:hover { background: var(--bg-card); }
+
+@media(max-width:800px){ .main_ { flex-direction:column; } .videoContainer { height:300px; } }
 </style>
 </head>
-
 <body>
+
 <div class="container">
-    <div class="title_"><img src="https://github.com/JOYG0322/bvvd_see_what/blob/main/assets/icon.png?raw=true">JiBaJiBa</div>
+    <div class="title_"><img src="icon.png">JiBaJiBa</div>
+    <div class="protocols">
+        <button class="protocol-btn active" data-proto="whep">WHEP</button>
+        <button class="protocol-btn" data-proto="whip">WHIP</button>
+        <button class="protocol-btn" data-proto="rtmp">RTMP</button>
+    </div>
     <div class="search_">
-        <input id="userenter" type="text" placeholder="输入流 URL" class="text_enter">
-        <button class="button_s" onclick="connect_URL()">连接</button>
+        <input id="roomInput" type="text" placeholder="输入房间号" class="text_enter">
+        <button class="button_s" id="connectBtn">连接</button>
     </div>
 </div>
 
 <div class="main_">
     <div class="videoContainer">
-        <!-- 显示远程视频 -->
         <video id="remoteVideo" autoplay playsinline muted controls></video>
         <div id="status" class="status">未连接</div>
-
-        <!-- 功能操作按钮：刷新 / 断开 / 全屏 -->
         <div class="controls">
-            <button class="button_l" onclick="connect_ref()">刷新</button>
-            <button class="button_r" onclick="disconnect()">断开</button>
-            <button class="button_r" onclick="toggleFullscreen()">全屏</button>
+            <button class="button_l" id="refreshBtn">刷新</button>
+            <button class="button_l" id="disconnectBtn">断开</button>
+            <button class="button_l" id="fullscreenBtn">网页全屏</button>
         </div>
     </div>
 
-    <div class="buttons">
-        <!-- 频道列表（可扩展） -->
-        <button class="button_play" onclick="connect_JOYG()"><img class="head_img" src="https://i0.hdslb.com/bfs/face/9d09d2e26423993a6ada3223899b3e93f3166198.jpg@128w_128h.webp">[直播] JOYG</button>
-        <button class="button_play" onclick="connect_CMHH()"><img class="head_img" src="https://i1.hdslb.com/bfs/face/e63d4246819688996c23d18a3d9d978bef57f74c.jpg@150w_150h.jpg">[直播] 超级老鼠</button>
-        <button class="button_play" onclick="connect_PL()"><img class="head_img" src="https://i0.hdslb.com/bfs/face/fa2109f2ef9e6e9e1711bfe1a37d01b3560697e0.jpg@128w_128h.webp">[直播] Pure1ove</button>
+    <div class="buttons" id="channelList">
+        <div class="section-title">预设频道</div>
+        <div id="presetContainer"></div>
+        <div class="section-title">历史记录</div>
+        <div id="historyContainer"></div>
     </div>
 </div>
 
-<script src="https://webrtc.github.io/adapter/adapter-latest.js">// 频道按钮调用（修复报错）
-function connect_JOYG() { connectStream(whepUrl_JOYG); }
-function connect_CMHH() { connectStream(whepUrl_CMHH); }
-function connect_PL() { connectStream(whepUrl_PL); }
-
-// C: 实时状态（延迟 / 码率 / FPS / 丢包率）
-setInterval(async () => {
-    if (!pc || pc.connectionState !== 'connected') return;
-    const stats = await pc.getStats();
-    let fps = 0, bitrate = 0, rtt = 0, loss = 0;
-
-    stats.forEach(report => {
-        if (report.type === 'inbound-rtp' && report.kind === 'video') {
-            if (report.framesPerSecond) fps = report.framesPerSecond;
-            if (report.bytesReceived && report.timestamp) {
-                if (!window._lastBytes) window._lastBytes = report.bytesReceived;
-                bitrate = ((report.bytesReceived - window._lastBytes) * 8 / 1024 / 1024).toFixed(2);
-                window._lastBytes = report.bytesReceived;
-            }
-            if (report.packetsLost && report.packetsReceived) {
-                loss = (report.packetsLost / (report.packetsLost + report.packetsReceived) * 100).toFixed(2);
-            }
-        }
-        if (report.type === 'candidate-pair' && report.currentRoundTripTime) {
-            rtt = (report.currentRoundTripTime * 1000).toFixed(0);
-        }
-    });
-
-    updateStatus(`延迟: ${rtt}ms | 码率: ${bitrate}Mbps | FPS: ${fps} | 丢包率: ${loss}%`);
-}, 1000);
-
-</script>
+<script src="adapter.js"></script>
 <script>
-let pc = null;              // WebRTC PeerConnection 对象
-let currentWhepUrl = null;   // 记录当前连接流 URL
-let isFullscreen = false;    // 全屏状态标记
+class JiBaJiBaPlayer {
+    constructor() {
+        this.pc=null;
+        this.currentUrl=null;
+        this.statsInterval=null;
+        this.isFullscreen=false;
+        this.fullscreenTimeout=null;
+        this.currentProto='whep';
+        this.video=document.getElementById('remoteVideo');
+        this.statusEl=document.getElementById('status');
+        this.fullscreenBtn=document.getElementById('fullscreenBtn');
+        this.historyContainer=document.getElementById('historyContainer');
+        this.presetContainer=document.getElementById('presetContainer');
+        this.roomInput=document.getElementById('roomInput');
 
-function updateStatus(t) {
-    document.getElementById('status').innerText = t;
+        this.presetChannels=[
+            {name:'[直播] JOYG', img:'joyg.jpg', url:'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=JOYG'},
+            {name:'[直播] 超级老鼠', img:'cmhh.jpg', url:'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=CMHH'},
+            {name:'[直播] Pure1ove', img:'pl.jpg', url:'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=PL'}
+        ];
+
+        this.bindUI();
+        this.loadPresetChannels();
+        this.updateStatus('就绪 - 点击频道或输入房间号开始播放');
+    }
+
+    bindUI(){
+        document.querySelectorAll('.protocol-btn').forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                document.querySelectorAll('.protocol-btn').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                this.currentProto=btn.dataset.proto;
+            });
+        });
+
+        document.getElementById('connectBtn').addEventListener('click', ()=>this.connectRoom());
+        document.getElementById('refreshBtn').addEventListener('click', ()=>this.refresh());
+        document.getElementById('disconnectBtn').addEventListener('click', ()=>this.disconnect());
+        this.fullscreenBtn.addEventListener('click', ()=>this.toggleFullscreen());
+
+        this.roomInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') this.connectRoom(); });
+
+        document.addEventListener('keydown', (e)=>{
+            if(e.key==='Escape' && this.isFullscreen) this.toggleFullscreen();
+            if(e.key==='f' || e.key==='F'){ if(!this.isFullscreen && this.video.srcObject) this.toggleFullscreen(); }
+        });
+    }
+
+    loadPresetChannels(){
+        this.presetContainer.innerHTML='';
+        this.presetChannels.forEach(ch=>{
+            const btn=this.createChannelButton(ch.name,ch.img,ch.url,false);
+            this.presetContainer.appendChild(btn);
+        });
+    }
+
+    createChannelButton(name,img,url,manual=false){
+        const btn=document.createElement('button');
+        btn.className='button_play'+(manual?' manual':'');
+        btn.onclick=()=>this.connectStream(url);
+
+        if(img){
+            const imgEl=document.createElement('img');
+            imgEl.className='head_img';
+            imgEl.src=img;
+            btn.appendChild(imgEl);
+        }
+
+        const textNode=document.createTextNode(name);
+        btn.appendChild(textNode);
+
+        if(manual){
+            const delBtn=document.createElement('button');
+            delBtn.className='delete_btn';
+            delBtn.innerText='×';
+            delBtn.onclick=(e)=>{ e.stopPropagation(); btn.remove(); urlDiv.remove(); };
+            btn.appendChild(delBtn);
+
+            const urlDiv=document.createElement('div');
+            urlDiv.className='url_text';
+            urlDiv.innerText=url;
+            this.historyContainer.appendChild(btn);
+            this.historyContainer.appendChild(urlDiv);
+        }
+        return btn;
+    }
+
+    generateUrl(room){ if(!room) return null;
+        switch(this.currentProto){
+            case 'whep': return `http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=${room}`;
+            case 'whip': return `http://10.126.126.10:1985/rtc/v1/whip/?app=live&stream=${room}`;
+            case 'rtmp': return `rtmp://10.126.126.10/live/${room}`;
+            default: return null;
+        }
+    }
+
+    connectRoom(){
+        const room=this.roomInput.value.trim();
+        const url=this.generateUrl(room);
+        if(!url) return;
+        this.connectStream(url);
+        this.addManualChannel(room,url);
+    }
+
+    addManualChannel(name,url){ this.createChannelButton(name,null,url,true); }
+
+    refresh(){ if(this.currentUrl) this.connectStream(this.currentUrl); }
+
+    disconnect(){
+        if(this.pc){ this.pc.close(); this.pc=null; }
+        if(this.statsInterval){ clearInterval(this.statsInterval); this.statsInterval=null; }
+        this.video.srcObject=null;
+        this.updateStatus('已断开连接');
+        window._lastBytes=0;
+        if(this.isFullscreen) this.toggleFullscreen();
+    }
+
+    async connectStream(url){
+        this.disconnect();
+        this.currentUrl=url;
+        this.updateStatus('正在连接...');
+        this.pc=new RTCPeerConnection({ iceServers:[{urls:'stun:stun.l.google.com:19302'}] });
+        this.pc.addTransceiver('video',{direction:'recvonly'});
+        this.pc.addTransceiver('audio',{direction:'recvonly'});
+        this.pc.ontrack=e=>{ this.video.srcObject=e.streams[0]; this.updateStatus('连接成功 · 正在接收视频'); };
+
+        try{
+            const offer=await this.pc.createOffer(); await this.pc.setLocalDescription(offer);
+            const response=await fetch(url,{method:'POST', headers:{'Content-Type':'application/sdp'}, body:offer.sdp});
+            if(!response.ok) throw new Error(`HTTP ${response.status}`);
+            const answer=await response.text();
+            await this.pc.setRemoteDescription({type:'answer', sdp:answer});
+            this.startStats();
+        }catch(e){ console.error(e); this.updateStatus(`连接失败: ${e.message}`); this.disconnect(); }
+    }
+
+    startStats(){
+        if(this.statsInterval) clearInterval(this.statsInterval);
+        this.statsInterval=setInterval(async()=>{
+            if(!this.pc||this.pc.connectionState!=='connected') return;
+            try{
+                const stats=await this.pc.getStats();
+                let fps=0, bitrate=0, rtt=0, loss=0;
+                stats.forEach(r=>{
+                    if(r.type==='inbound-rtp' && r.kind==='video'){
+                        if(r.framesPerSecond) fps=r.framesPerSecond;
+                        if(r.bytesReceived&&r.timestamp){
+                            if(!window._lastBytes) window._lastBytes=r.bytesReceived;
+                            const dt=(r.timestamp-(window._lastTimestamp||r.timestamp))/1000;
+                            if(dt>0) bitrate=((r.bytesReceived-window._lastBytes)*8/dt/1024/1024).toFixed(2);
+                            window._lastBytes=r.bytesReceived; window._lastTimestamp=r.timestamp;
+                        }
+                        if(r.packetsLost!==undefined && r.packetsReceived){ const total=r.packetsLost+r.packetsReceived; loss=total>0?(r.packetsLost/total*100).toFixed(2):0; }
+                    }
+                    if(r.type==='candidate-pair' && r.currentRoundTripTime) rtt=(r.currentRoundTripTime*1000).toFixed(0);
+                });
+                this.updateStatus(`延迟: ${rtt}ms | 码率: ${bitrate}Mbps | FPS: ${fps} | 丢包率: ${loss}%`);
+            }catch(e){ console.error('获取统计失败:',e); }
+        },1000);
+    }
+
+    toggleFullscreen(){
+        if(!this.isFullscreen){
+            const fullscreenDiv=document.createElement('div');
+            fullscreenDiv.className='fullscreen-mode'; fullscreenDiv.id='fullscreenContainer';
+            const controlsDiv=document.createElement('div'); controlsDiv.className='fullscreen-controls';
+            controlsDiv.innerHTML = `<button onclick="player.disconnect()">断开</button><button onclick="player.toggleFullscreen()">退出全屏</button>`;
+            const videoClone=this.video.cloneNode(true); videoClone.controls=true;
+            if(this.video.srcObject) videoClone.srcObject=this.video.srcObject;
+            fullscreenDiv.appendChild(videoClone); fullscreenDiv.appendChild(controlsDiv);
+            document.body.appendChild(fullscreenDiv);
+            this.video.style.display='none'; this.fullscreenBtn.textContent='退出全屏'; this.isFullscreen=true;
+            this.fullscreenTimeout=setTimeout(()=>controlsDiv.classList.add('hidden'),1000);
+            fullscreenDiv.addEventListener('mousemove', ()=>{
+                controlsDiv.classList.remove('hidden'); clearTimeout(this.fullscreenTimeout);
+                this.fullscreenTimeout=setTimeout(()=>controlsDiv.classList.add('hidden'),1000);
+            });
+            controlsDiv.addEventListener('mouseleave', ()=>{ this.fullscreenTimeout=setTimeout(()=>controlsDiv.classList.add('hidden'),1000); });
+        }else{
+            const fullscreenContainer=document.getElementById('fullscreenContainer');
+            if(fullscreenContainer) document.body.removeChild(fullscreenContainer);
+            if(this.fullscreenTimeout) clearTimeout(this.fullscreenTimeout);
+            this.video.style.display='block'; this.fullscreenBtn.textContent='网页全屏'; this.isFullscreen=false;
+        }
+    }
+
+    updateStatus(text){ this.statusEl.innerText=text; }
 }
 
-function getIceServers() {
-    return [{ urls: 'stun:stun.l.google.com:19302' }];
-}
+const player = new JiBaJiBaPlayer();
+</script>
 
-// ★ 通用连接函数（所有直播源调用同一个逻辑）
-async function connectStream(url) {
-    currentWhepUrl = url;
-    updateStatus('正在连接...');
-
-    if (pc) pc.close();
-    pc = new RTCPeerConnection({ iceServers: getIceServers() });
-
-    pc.addTransceiver('video', { direction: 'recvonly' });
-    pc.addTransceiver('audio', { direction: 'recvonly' });
-
-    pc.ontrack = e => {
-        document.getElementById('remoteVideo').srcObject = e.streams[0];
-        updateStatus('连接成功 · 正在接收视频');
-    };
-
-    const offer = await pc.createOffer();
-    await pc.set
+</body>
+</html>
