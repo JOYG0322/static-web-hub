@@ -1,0 +1,213 @@
+<!-- JiBaJiBa WebRTC Player v3.0 (Bilibili Style UI) -->
+<!-- 功能注释：
+1. 保留 v2.0 优化后的核心逻辑（connectStream, currentWhepUrl, refresh, disconnect）
+2. UI 改为 Bilibili 风格（圆角、柔和阴影、卡片布局、按钮悬浮反馈）
+3. 未修改任何结构性逻辑，只增强视觉表现 + 更友好的控件布局
+4. 增加功能注释（不添加修改说明）
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>JiBaJiBa</title>
+
+<style>
+:root {
+    --bg-dark: #0f0f0f;
+    --bg-card: #1b1b1b;
+    --bg-hover: #2b2b2b;
+    --text-main: #f1f1f1;
+    --text-sub: #aaaaaa;
+    --accent: #00a1d6; /* B站主题蓝 */
+}
+
+body {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: "Segoe UI", sans-serif;
+    padding: 15px;
+}
+
+/* 顶栏布局 */
+.container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.title_ {
+    display: flex;
+    align-items: center;
+    font-size: 26px;
+    font-weight: bold;
+}
+.title_ img {
+    height: 38px;
+    margin-right: 10px;
+    border-radius: 8px;
+}
+
+/* 输入框 + 按钮 */
+.search_ {
+    margin-left: 20px;
+    display: flex;
+    flex: 1;
+}
+.text_enter {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--bg-hover);
+    border-radius: 6px;
+    padding: 8px;
+    color: var(--text-main);
+}
+.button_s {
+    margin-left: 10px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+}
+.button_s:hover { background: #33b6e8; }
+
+/* 主体区域 */
+.main_ {
+    display: flex;
+    margin-top: 18px;
+}
+
+/* 视频区卡片化 */
+.videoContainer {
+    flex: 3;
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: 12px;
+    margin-right: 18px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.35);
+}
+
+video {
+    width: 100%;
+    border-radius: 10px;
+    background: #000;
+}
+
+.status {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--text-sub);
+}
+
+.controls {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+.button_l, .button_r {
+    flex: 1;
+    margin: 0 4px;
+    height: 38px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+.button_l { background: var(--bg-hover); color: var(--text-main); }
+.button_r { background: var(--accent); color: white; }
+.button_r:hover { background: #33b6e8; }
+
+/* 频道列表区域 */
+.buttons {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.button_play {
+    display: flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 12px;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: 0.15s;
+}
+.button_play:hover { background: var(--bg-hover); }
+
+.head_img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+    <div class="title_"><img src="https://github.com/JOYG0322/bvvd_see_what/blob/main/assets/icon.png?raw=true">JiBaJiBa</div>
+    <div class="search_">
+        <input id="userenter" type="text" placeholder="输入流 URL" class="text_enter">
+        <button class="button_s" onclick="connect_URL()">连接</button>
+    </div>
+</div>
+
+<div class="main_">
+    <div class="videoContainer">
+        <!-- 显示远程视频 -->
+        <video id="remoteVideo" autoplay playsinline muted controls></video>
+        <div id="status" class="status">未连接</div>
+
+        <!-- 功能操作按钮：刷新 / 断开 / 全屏 -->
+        <div class="controls">
+            <button class="button_l" onclick="connect_ref()">刷新</button>
+            <button class="button_r" onclick="disconnect()">断开</button>
+            <button class="button_r" onclick="toggleFullscreen()">全屏</button>
+        </div>
+    </div>
+
+    <div class="buttons">
+        <!-- 频道列表（可扩展） -->
+        <button class="button_play" onclick="connect_JOYG()"><img class="head_img" src="https://i0.hdslb.com/bfs/face/9d09d2e26423993a6ada3223899b3e93f3166198.jpg@128w_128h.webp">[直播] JOYG</button>
+        <button class="button_play" onclick="connect_CMHH()"><img class="head_img" src="https://i1.hdslb.com/bfs/face/e63d4246819688996c23d18a3d9d978bef57f74c.jpg@150w_150h.jpg">[直播] 超级老鼠</button>
+        <button class="button_play" onclick="connect_PL()"><img class="head_img" src="https://i0.hdslb.com/bfs/face/fa2109f2ef9e6e9e1711bfe1a37d01b3560697e0.jpg@128w_128h.webp">[直播] Pure1ove</button>
+    </div>
+</div>
+
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+<script>
+let pc = null;              // WebRTC PeerConnection 对象
+let currentWhepUrl = null;   // 记录当前连接流 URL
+let isFullscreen = false;    // 全屏状态标记
+
+function updateStatus(t) {
+    document.getElementById('status').innerText = t;
+}
+
+function getIceServers() {
+    return [{ urls: 'stun:stun.l.google.com:19302' }];
+}
+
+// ★ 通用连接函数（所有直播源调用同一个逻辑）
+async function connectStream(url) {
+    currentWhepUrl = url;
+    updateStatus('正在连接...');
+
+    if (pc) pc.close();
+    pc = new RTCPeerConnection({ iceServers: getIceServers() });
+
+    pc.addTransceiver('video', { direction: 'recvonly' });
+    pc.addTransceiver('audio', { direction: 'recvonly' });
+
+    pc.ontrack = e => {
+        document.getElementById('remoteVideo').srcObject = e.streams[0];
+        updateStatus('连接成功 · 正在接收视频');
+    };
+
+    const offer = await pc.createOffer();
+    await pc.set
