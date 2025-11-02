@@ -20,7 +20,9 @@
             --primary-color: #0F0F0F;
             --secondary-color: #272727;
             --light-color: #F1F1F1;
-            --caution-color: #FF0033
+            --caution-color: #FF0033;
+            --secondary-light-color: #3F3F3F;
+            --light-dark-color: #D6D6D6;
         }
         
         body {
@@ -58,7 +60,23 @@
             overflow: hidden;
             margin: 20px 0;
             min-width: 360px;
-            
+            display: flex;
+            justify-content:space-around;
+            height: 35px;
+        }
+        .search__ {
+            background-color: var(--secondary-color);
+            width: 80%;
+            overflow: hidden;
+            margin: 0px 0;
+            min-width: 360px;
+            border-style:solid;
+            border-width: 1px;
+            border-radius: 128px;
+            min-width: 45px;
+            display: flex;
+            justify-content: space-around;
+            border-color: var(--secondary-color);
         }
         .empty {
             width: 30%;
@@ -125,27 +143,28 @@
             border-radius: 5px;
         }
         .text_enter {
-            width: 80%; 
-            height: 30px;
-            margin: 10px 1.5%;
+            width: 90%; 
+            height: 100%;
             border-style:solid;
-            border-width: 1px;
-            border-radius: 10px;
+            border-width: 0px;
             background-color: var(--primary-color);
-            border-color: var(--secondary-color);
-            color: var(--secondary-color);
+            color: var(--light-color);
         }
         .button_s {
             width: 10%;
             float: right;
-            height: 35px;
-            margin: 10px 1.5%;
+            height: 100%;
             border-style:solid;
             border-width: 0px;
-            border-radius: 10px;
             background-color: var(--secondary-color);
             color: var(--light-color);
             min-width: 45px;
+        }
+        .button_s:hover {
+            background-color: var(--secondary-light-color);
+        }
+        .button_s:active {
+            background-color: var(--secondary-color);
         }
         .button_l {
             width: 7%;
@@ -159,6 +178,12 @@
             color: var(--primary-color);
             min-width: 45px;
         }
+        .button_l:hover {
+            background-color: var(--light-dark-color);
+        }
+        .button_l:active {
+            background-color: var(--light-color);
+        }
         .button_r {
             width: 7%;
             float: right;
@@ -170,6 +195,12 @@
             background-color: var(--secondary-color);
             color: var(--light-color);
             min-width: 45px;
+        }
+        .button_r:hover {
+            background-color: var(--secondary-light-color)
+        }
+        .button_r:active {
+            background-color: var(--secondary-color);
         }
         .main_ {
             width: 100%;
@@ -198,6 +229,12 @@
             font-size: small;
             min-width: 250px;
         }
+        .button_play:hover {
+            background: var(--secondary-color);
+        }
+        .button_play:active {
+            background: var(--primary-color);
+        }
         .head_img{
             height: 80px;
             border-radius: 100%;
@@ -209,6 +246,25 @@
         }
         .buttons, .videoContainer {
             float: left;
+        }
+
+        .Protocol {
+            width: 10%;
+            border-style:solid;
+            border-width: 0px;
+            border-radius: 128px;
+            min-width: 65px;
+            display: flex;
+            justify-content: space-around;
+            background-color: var(--secondary-color);
+            color: var(--light-color);
+            border-color: var(--secondary-color);
+        }
+        .Protocol:hover {
+            background-color: var(--secondary-light-color);
+        }
+        .Protocol:active {
+            background-color: var(--secondary-color);
         }
 
                         /* 移动设备响应式布局 */
@@ -281,10 +337,17 @@
     <div class="browser-warning" id="browserWarning"></div>
     
     <div class="container">
-        <div class="title_"><img src="https://github.com/JOYG0322/bvvd_see_what/blob/main/assets/icon.png?raw=true">JiBaJiBa</div>
+        <div class="title_"><img src="icon.png">JiBaJiBa</div>
         <div class="search_">
-            <input type="text" placeholder="输入URL" id="userenter" value="" class="text_enter">
-            <button onclick="connect_URL()" class="button_s">连接</button>
+            <select id="Protocol" name="Protocol" class="Protocol">
+                <option value="http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=">WHEP</option>
+                <option value="http://10.126.126.10:1985/rtc/v1/whip/?app=live&stream=">WHIP</option>
+                <option value="rtmp://10.126.126.10/live/">RTMP</option>
+            </select>
+            <div class="search__">
+                <input type="text" placeholder="输入房间号" id="userenter" value="" class="text_enter">
+                <button onclick="connect_URL()" class="button_s">连接</button>
+            </div>
         </div>
         <div class="empty"></div>
     </div>
@@ -293,15 +356,15 @@
             <video id="remoteVideo" autoplay controls muted playsinline class="player"></video>
             <div class="status" id="status">未连接</div>
             <div class="controls">
-                <button onclick="connect_ref()" class="button_l">刷新</button>
+                <button onclick="connect_play()" class="button_l">刷新</button>
                 <button onclick="disconnect()" class="button_r">断开</button>
                 <button onclick="toggleFullscreen()" class="button_r">全屏</button>
             </div>
         </div>
         <div class="buttons">
-            <button onclick="connect_CMHH()" class="button_play"><img src="https://i1.hdslb.com/bfs/face/e63d4246819688996c23d18a3d9d978bef57f74c.jpg@150w_150h.jpg" class="head_img">[直播]Chaoji_Mouse</button>
-            <button onclick="connect_JOYG()" class="button_play"><img src="https://i0.hdslb.com/bfs/face/9d09d2e26423993a6ada3223899b3e93f3166198.jpg@128w_128h_1c_1s.webp" class="head_img">[直播]JOYG</button>
-            <button onclick="connect_PL()" class="button_play"><img src="https://i0.hdslb.com/bfs/face/fa2109f2ef9e6e9e1711bfe1a37d01b3560697e0.jpg@128w_128h_1c_1s.webp" class="head_img">[直播]Pure1ove</button>
+            <button onclick="connect_CMHH()" class="button_play"><img src="http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=CMHH" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
+            <button onclick="connect_JOYG()" class="button_play"><img src="http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=JOYG" class="head_img" streamname="JOYG">[直播]JOYG</button>
+            <button onclick="connect_PL()" class="button_play"><img src="http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=PL" class="head_img" streamname="PL">[直播]Pure1ove</button>
         </div>
     </div>
     
@@ -313,7 +376,7 @@
         const whepUrl_JOYG = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=JOYG';
         const whepUrl_CMHH = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=CMHH';
         const whepUrl_PL = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=PL';
-        var whepUrl_ref = ''
+        window.whepUrl_ref = ''
 
         function isMobileDevice() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -378,6 +441,9 @@
         // 页面加载时检测并调整布局
         window.addEventListener('load', function() {
             adjustLayoutForMobile();
+            detectBrowser();
+            _checkStreamStatus();
+            setInterval(_checkStreamStatus, 10000);
         });
 
         // 窗口大小改变时也检测
@@ -485,143 +551,15 @@
             }
         });
         
-        async function connect_JOYG() {
+        async function connect_play() {
             try {
-                updateStatus('正在连接JOYG...');
-                var whepUrl_ref = whepUrl_JOYG;
+                updateStatus('正在连接');
                 
                 // 先断开现有连接
-                if (pc) {
-                    pc.close();
-                    pc = null;
-                }
-                
-                pc = new RTCPeerConnection({
-                    iceServers: getIceServers(),
-                    iceTransportPolicy: 'all',
-                    bundlePolicy: 'max-bundle',
-                    rtcpMuxPolicy: 'require'
-                });
-                
-                pc.ontrack = e => {
-                    updateStatus('已接收到视频流');
-                    const remoteVideo = document.getElementById('remoteVideo');
-                    remoteVideo.srcObject = e.streams[0];
-                    
-                    // Firefox 特殊处理
-                    // [ntd]Firefox 无法正常使用，考虑是否保留针对Firefox的优化
-                    if (navigator.userAgent.includes('Firefox')) {
-                        remoteVideo.play().catch(err => {
-                            console.warn('Firefox 自动播放被阻止:', err);
-                            updateStatus('Firefox: 请点击视频播放按钮');
-                        });
-                    }
-                };
-                
-                // 监听连接状态
-                pc.onconnectionstatechange = () => {
-                    const state = pc.connectionState;
-                    updateStatus('连接状态: ' + state);
-                    
-                    if (state === 'connected') {
-                        updateStatus('连接成功！');
-                    } else if (state === 'failed') {
-                        updateStatus('连接失败，请重试或使用 Chrome 浏览器');
-                    }
-                };
-                
-                pc.oniceconnectionstatechange = () => {
-                    updateStatus('ICE连接状态: ' + pc.iceConnectionState);
-                };
-                
-                // ICE 收集状态
-                pc.onicegatheringstatechange = () => {
-                    console.log('ICE gathering state:', pc.iceGatheringState);
-                };
-                
-                // ICE 候选信息
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        console.log('ICE candidate:', event.candidate.candidate);
-                    } else {
-                        console.log('ICE gathering complete');
-                    }
-                };
-                
-                // 创建 offer - Firefox 兼容性改进
-                const transceiverVideo = pc.addTransceiver('video', { direction: 'recvonly' });
-                const transceiverAudio = pc.addTransceiver('audio', { direction: 'recvonly' });
-                
-                // 设置更好的编解码器偏好（Firefox 可能需要）
-                try {
-                    const offer = await pc.createOffer();
-                    
-                    // 修改 SDP 以改善兼容性
-                    let sdp = offer.sdp;
-                    
-                    // 添加 Firefox 兼容性改进
-                    if (navigator.userAgent.includes('Firefox')) {
-                        sdp = sdp.replace(/a=group:BUNDLE 0 1/g, 'a=group:BUNDLE 0');
-                    }
-                    
-                    await pc.setLocalDescription({ type: 'offer', sdp: sdp });
-                    
-                    // 延长超时时间，特别是对于 Firefox
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-                    
-                    // 发送 offer 到 WHEP 服务器
-                    const response = await fetch(whepUrl_JOYG, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/sdp'
-                        },
-                        body: sdp,
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    // 设置服务器返回的 answer
-                    const answerSdp = await response.text();
-                    await pc.setRemoteDescription({
-                        type: 'answer',
-                        sdp: answerSdp
-                    });
-                    
-                    updateStatus('连接建立成功，等待视频流...');
-                    
-                } catch (error) {
-                    if (error.name === 'AbortError') {
-                        throw new Error('连接超时，请检查网络或服务器状态');
-                    }
-                    throw error;
-                }
-                
-            } catch (error) {
-                updateStatus('连接失败: ' + error.message);
-                console.error('连接错误:', error);
-                
-                // Firefox 特定建议
-                if (navigator.userAgent.includes('Firefox')) {
-                    updateStatus('Firefox 用户建议: 尝试刷新页面或使用 Chrome 浏览器');
-                }
-            }
-        }
-
-        async function connect_PL() {
-            try {
-                updateStatus('正在连接PL...');
-                var whepUrl_ref = whepUrl_PL
-                
-                // 先断开现有连接
-                if (pc) {
-                    pc.close();
-                    pc = null;
+                disconnect(); // 这会清除之前的连接和统计
+                const selectedStream = window.whepUrl_ref.split('=').pop();
+                if (window.streamStatus && !window.streamStatus[selectedStream]?.active) {
+                    updateStatus('警告：该频道当前可能没有直播流');
                 }
                 
                 pc = new RTCPeerConnection({
@@ -698,260 +636,6 @@
                     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
                     
                     // 发送 offer 到 WHEP 服务器
-                    const response = await fetch(whepUrl_PL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/sdp'
-                        },
-                        body: sdp,
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    // 设置服务器返回的 answer
-                    const answerSdp = await response.text();
-                    await pc.setRemoteDescription({
-                        type: 'answer',
-                        sdp: answerSdp
-                    });
-                    
-                    updateStatus('连接建立成功，等待视频流...');
-                    
-                } catch (error) {
-                    if (error.name === 'AbortError') {
-                        throw new Error('连接超时，请检查网络或服务器状态');
-                    }
-                    throw error;
-                }
-                
-            } catch (error) {
-                updateStatus('连接失败: ' + error.message);
-                console.error('连接错误:', error);
-                
-                // Firefox 特定建议
-                if (navigator.userAgent.includes('Firefox')) {
-                    updateStatus('Firefox 用户建议: 尝试刷新页面或使用 Chrome 浏览器');
-                }
-            }
-        }
-
-        async function connect_CMHH() {
-            try {
-                updateStatus('正在连接CMHH...');
-                var whepUrl_ref = whepUrl_CMHH;
-                
-                // 先断开现有连接
-                if (pc) {
-                    pc.close();
-                    pc = null;
-                }
-                
-                pc = new RTCPeerConnection({
-                    iceServers: getIceServers(),
-                    iceTransportPolicy: 'all',
-                    bundlePolicy: 'max-bundle',
-                    rtcpMuxPolicy: 'require'
-                });
-                
-                pc.ontrack = e => {
-                    updateStatus('已接收到视频流');
-                    const remoteVideo = document.getElementById('remoteVideo');
-                    remoteVideo.srcObject = e.streams[0];
-                    
-                    // Firefox 特殊处理
-                    if (navigator.userAgent.includes('Firefox')) {
-                        remoteVideo.play().catch(err => {
-                            console.warn('Firefox 自动播放被阻止:', err);
-                            updateStatus('Firefox: 请点击视频播放按钮');
-                        });
-                    }
-                };
-                
-                pc.onconnectionstatechange = () => {
-                    const state = pc.connectionState;
-                    updateStatus('连接状态: ' + state);
-                    
-                    if (state === 'connected') {
-                        updateStatus('连接成功！');
-                    } else if (state === 'failed') {
-                        updateStatus('连接失败，请重试或使用 Chrome 浏览器');
-                    }
-                };
-                
-                pc.oniceconnectionstatechange = () => {
-                    updateStatus('ICE连接状态: ' + pc.iceConnectionState);
-                };
-                
-                // ICE 收集状态
-                pc.onicegatheringstatechange = () => {
-                    console.log('ICE gathering state:', pc.iceGatheringState);
-                };
-                
-                // ICE 候选信息
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        console.log('ICE candidate:', event.candidate.candidate);
-                    } else {
-                        console.log('ICE gathering complete');
-                    }
-                };
-                
-                const transceiverVideo = pc.addTransceiver('video', { direction: 'recvonly' });
-                const transceiverAudio = pc.addTransceiver('audio', { direction: 'recvonly' });
-                
-                try {
-                    const offer = await pc.createOffer();
-                    
-                    let sdp = offer.sdp;
-                    
-                    // 添加 Firefox 兼容性改进
-                    if (navigator.userAgent.includes('Firefox')) {
-                        sdp = sdp.replace(/a=group:BUNDLE 0 1/g, 'a=group:BUNDLE 0');
-                    }
-                    
-                    await pc.setLocalDescription({ type: 'offer', sdp: sdp });
-                    
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
-                    
-                    const response = await fetch(whepUrl_CMHH, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/sdp'
-                        },
-                        body: sdp,
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    const answerSdp = await response.text();
-                    await pc.setRemoteDescription({
-                        type: 'answer',
-                        sdp: answerSdp
-                    });
-                    
-                    updateStatus('连接建立成功，等待视频流...');
-                    
-                } catch (error) {
-                    if (error.name === 'AbortError') {
-                        throw new Error('连接超时，请检查网络或服务器状态');
-                    }
-                    throw error;
-                }
-                
-            } catch (error) {
-                updateStatus('连接失败: ' + error.message);
-                console.error('连接错误:', error);
-                
-                if (navigator.userAgent.includes('Firefox')) {
-                    updateStatus('Firefox 用户建议: 尝试刷新页面或使用 Chrome 浏览器');
-                }
-            }
-        }
-        
-        function disconnect() {
-            if (pc) {
-                pc.close();
-                pc = null;
-                updateStatus('已断开连接');
-                document.getElementById('remoteVideo').srcObject = null;
-                
-                // 如果正在全屏，也退出全屏
-                if (isFullscreen) {
-                    toggleFullscreen();
-                }
-            }
-        }
-        
-        async function connect_ref() {
-            try {
-                updateStatus('正在连接ref...');
-                var whepUrl_ref = whepUrl_ref;
-                
-                // 先断开现有连接
-                if (pc) {
-                    pc.close();
-                    pc = null;
-                }
-                
-                pc = new RTCPeerConnection({
-                    iceServers: getIceServers(),
-                    iceTransportPolicy: 'all',
-                    bundlePolicy: 'max-bundle',
-                    rtcpMuxPolicy: 'require'
-                });
-                
-                pc.ontrack = e => {
-                    updateStatus('已接收到视频流');
-                    const remoteVideo = document.getElementById('remoteVideo');
-                    remoteVideo.srcObject = e.streams[0];
-                    
-                    // Firefox 特殊处理
-                    if (navigator.userAgent.includes('Firefox')) {
-                        remoteVideo.play().catch(err => {
-                            console.warn('Firefox 自动播放被阻止:', err);
-                            updateStatus('Firefox: 请点击视频播放按钮');
-                        });
-                    }
-                };
-                
-                pc.onconnectionstatechange = () => {
-                    const state = pc.connectionState;
-                    updateStatus('连接状态: ' + state);
-                    
-                    if (state === 'connected') {
-                        updateStatus('连接成功！');
-                    } else if (state === 'failed') {
-                        updateStatus('连接失败，请重试或使用 Chrome 浏览器');
-                    }
-                };
-                
-                pc.oniceconnectionstatechange = () => {
-                    updateStatus('ICE连接状态: ' + pc.iceConnectionState);
-                };
-                
-                // ICE 收集状态
-                pc.onicegatheringstatechange = () => {
-                    console.log('ICE gathering state:', pc.iceGatheringState);
-                };
-                
-                // ICE 候选信息
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        console.log('ICE candidate:', event.candidate.candidate);
-                    } else {
-                        console.log('ICE gathering complete');
-                    }
-                };
-                
-                const transceiverVideo = pc.addTransceiver('video', { direction: 'recvonly' });
-                const transceiverAudio = pc.addTransceiver('audio', { direction: 'recvonly' });
-                
-                try {
-                    const offer = await pc.createOffer();
-                    
-                    let sdp = offer.sdp;
-                    
-                    // 添加 Firefox 兼容性改进
-                    if (navigator.userAgent.includes('Firefox')) {
-                        sdp = sdp.replace(/a=group:BUNDLE 0 1/g, 'a=group:BUNDLE 0');
-                    }
-                    
-                    await pc.setLocalDescription({ type: 'offer', sdp: sdp });
-                    
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
-                    
                     const response = await fetch(whepUrl_ref, {
                         method: 'POST',
                         headers: {
@@ -967,152 +651,6 @@
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
-                    const answerSdp = await response.text();
-                    await pc.setRemoteDescription({
-                        type: 'answer',
-                        sdp: answerSdp
-                    });
-                    
-                    updateStatus('连接建立成功，等待视频流...');
-                    
-                } catch (error) {
-                    if (error.name === 'AbortError') {
-                        throw new Error('连接超时，请检查网络或服务器状态');
-                    }
-                    throw error;
-                }
-                
-            } catch (error) {
-                updateStatus('连接失败: ' + error.message);
-                console.error('连接错误:', error);
-                
-                if (navigator.userAgent.includes('Firefox')) {
-                    updateStatus('Firefox 用户建议: 尝试刷新页面或使用 Chrome 浏览器');
-                }
-            }
-        }
-        
-        function disconnect() {
-            if (pc) {
-                pc.close();
-                pc = null;
-                updateStatus('已断开连接');
-                document.getElementById('remoteVideo').srcObject = null;
-                
-                // 如果正在全屏，也退出全屏
-                if (isFullscreen) {
-                    toggleFullscreen();
-                }
-            }
-        }
-
-        async function connect_URL() {
-            try {
-                updateStatus('正在连接URL...');
-                
-                // 获取用户输入的URL
-                const userUrl = getTextBoxValue();
-                if (!userUrl) {
-                    updateStatus('请输入URL地址');
-                    return;
-                }
-                
-                var whepUrl_ref = userUrl;
-                // 先断开现有连接
-                if (pc) {
-                    pc.close();
-                    pc = null;
-                }
-                
-                pc = new RTCPeerConnection({
-                    iceServers: getIceServers(),
-                    iceTransportPolicy: 'all',
-                    bundlePolicy: 'max-bundle',
-                    rtcpMuxPolicy: 'require'
-                });
-                
-                pc.ontrack = e => {
-                    updateStatus('已接收到视频流');
-                    const remoteVideo = document.getElementById('remoteVideo');
-                    remoteVideo.srcObject = e.streams[0];
-                    
-                    // Firefox 特殊处理
-                    if (navigator.userAgent.includes('Firefox')) {
-                        remoteVideo.play().catch(err => {
-                            console.warn('Firefox 自动播放被阻止:', err);
-                            updateStatus('Firefox: 请点击视频播放按钮');
-                        });
-                    }
-                };
-                
-                // 监听连接状态
-                pc.onconnectionstatechange = () => {
-                    const state = pc.connectionState;
-                    updateStatus('连接状态: ' + state);
-                    
-                    if (state === 'connected') {
-                        updateStatus('连接成功！');
-                    } else if (state === 'failed') {
-                        updateStatus('连接失败，请重试或使用 Chrome 浏览器');
-                    }
-                };
-                
-                pc.oniceconnectionstatechange = () => {
-                    updateStatus('ICE连接状态: ' + pc.iceConnectionState);
-                };
-                
-                // ICE 收集状态
-                pc.onicegatheringstatechange = () => {
-                    console.log('ICE gathering state:', pc.iceGatheringState);
-                };
-                
-                // ICE 候选信息
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        console.log('ICE candidate:', event.candidate.candidate);
-                    } else {
-                        console.log('ICE gathering complete');
-                    }
-                };
-                
-                // 创建 offer - Firefox 兼容性改进
-                const transceiverVideo = pc.addTransceiver('video', { direction: 'recvonly' });
-                const transceiverAudio = pc.addTransceiver('audio', { direction: 'recvonly' });
-                
-                // 设置更好的编解码器偏好（Firefox 可能需要）
-                try {
-                    const offer = await pc.createOffer();
-                    
-                    // 修改 SDP 以改善兼容性
-                    let sdp = offer.sdp;
-                    
-                    // 添加 Firefox 兼容性改进
-                    if (navigator.userAgent.includes('Firefox')) {
-                        sdp = sdp.replace(/a=group:BUNDLE 0 1/g, 'a=group:BUNDLE 0');
-                    }
-                    
-                    await pc.setLocalDescription({ type: 'offer', sdp: sdp });
-                    
-                    // 延长超时时间，特别是对于 Firefox
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-                    
-                    // 发送 offer 到用户输入的 WHEP 服务器
-                    const response = await fetch(userUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/sdp'
-                        },
-                        body: sdp,
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
                     // 设置服务器返回的 answer
                     const answerSdp = await response.text();
                     await pc.setRemoteDescription({
@@ -1128,7 +666,7 @@
                     }
                     throw error;
                 }
-                
+                _startStats();
             } catch (error) {
                 updateStatus('连接失败: ' + error.message);
                 console.error('连接错误:', error);
@@ -1137,6 +675,198 @@
                 if (navigator.userAgent.includes('Firefox')) {
                     updateStatus('Firefox 用户建议: 尝试刷新页面或使用 Chrome 浏览器');
                 }
+            }
+        }
+
+        /**
+         * 开始收集连接统计信息
+         */
+        let streamStatus = {};
+                // 修复函数定义 - 添加 function 关键字
+        async function _checkStreamStatus() {
+            try {
+                const response = await fetch('http://10.126.126.10:1985/api/v1/streams/');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                
+                if (data.code === 0 && data.streams) {
+                    // 更新流状态信息
+                    window.streamStatus = {};
+                    data.streams.forEach(stream => {
+                        window.streamStatus[stream.name] = {
+                            active: stream.publish && stream.publish.active,
+                            video: stream.video,
+                            audio: stream.audio
+                        };
+                    });
+                    
+                    // 更新所有频道按钮的状态指示器
+                    _updateChannelStatusIndicators();
+                }
+            } catch (error) {
+                console.error('获取流状态失败:', error);
+                // 出错时将所有状态设为未知
+                _setAllStatusUnknown();
+            }
+        }
+
+        function _updateChannelStatusIndicators() {
+            const channelButtons = document.querySelectorAll('.button_play img');
+            channelButtons.forEach(img => {
+                const streamName = img.getAttribute('streamname');
+                const status = window.streamStatus && window.streamStatus[streamName];
+                
+                if (status) {
+                    if (status.active) {
+                        // 在线且有视频流
+                        img.style.border = '3px solid var(--caution-color)'; // 绿色边框
+                    } else {
+                        // 在线但无视频流
+                        img.style.border = '3px solid var(--secondary-color)'; // 黄色边框
+                    }
+                } else {
+                    // 离线
+                    img.style.border = '3px solid var(--secondary-color)'; // 红色边框
+                }
+            });
+        }
+
+        function _setAllStatusUnknown() {
+            const channelButtons = document.querySelectorAll('.button_play img');
+            channelButtons.forEach(img => {
+                img.style.border = '3px solid var(--secondary-color)'; // 灰色边框
+            });
+        }
+
+        let statsInterval = null;
+        function _startStats() {
+            if (statsInterval) {
+                clearInterval(statsInterval);
+            }
+            
+            statsInterval = setInterval(async () => {
+                if (!pc || pc.connectionState !== 'connected') {
+                    return;
+                }
+                
+                try {
+                    const stats = await pc.getStats();
+                    let fps = 0, bitrate = 0, rtt = 0, loss = 0;
+                    
+                    stats.forEach(r => {
+                        // 视频流统计
+                        if (r.type === 'inbound-rtp' && r.kind === 'video') {
+                            // 帧率
+                            if (r.framesPerSecond) {
+                                fps = r.framesPerSecond;
+                            }
+                            
+                            // 码率计算
+                            if (r.bytesReceived && r.timestamp) {
+                                if (!window._lastBytes) {
+                                    window._lastBytes = r.bytesReceived;
+                                    window._lastTimestamp = r.timestamp;
+                                } else {
+                                    const dt = (r.timestamp - window._lastTimestamp) / 1000;
+                                    if (dt > 0) {
+                                        bitrate = ((r.bytesReceived - window._lastBytes) * 8 / dt / 1024 / 1024).toFixed(2);
+                                    }
+                                    window._lastBytes = r.bytesReceived;
+                                    window._lastTimestamp = r.timestamp;
+                                }
+                            }
+                            
+                            // 丢包率计算
+                            if (r.packetsLost !== undefined && r.packetsReceived !== undefined) {
+                                const total = r.packetsLost + r.packetsReceived;
+                                loss = total > 0 ? (r.packetsLost / total * 100).toFixed(2) : 0;
+                            }
+                        }
+                        
+                        // 往返时间统计
+                        if (r.type === 'candidate-pair' && r.currentRoundTripTime) {
+                            rtt = (r.currentRoundTripTime * 1000).toFixed(0);
+                        }
+                    });
+                    
+                    updateStatus(`延迟: ${rtt}ms | 码率: ${bitrate}Mbps | FPS: ${fps} | 丢包率: ${loss}%`);
+                } catch (e) {
+                    // 静默处理统计获取失败
+                }
+            }, 1000);
+        }
+
+        async function connect_JOYG() {
+            try {
+                window.whepUrl_ref = whepUrl_JOYG;
+                connect_play();
+            } catch (error) {
+                updateStatus('连接失败: ');
+                console.error('连接 JOYG 错误:');
+            }
+        }
+
+        async function connect_PL() {
+            try {
+                window.whepUrl_ref = whepUrl_PL;
+                connect_play();
+            } catch (error) {
+                updateStatus('连接失败: ');
+                console.error('连接 PL 错误:');
+            }
+        }
+
+        async function connect_CMHH() {
+            try {
+                window.whepUrl_ref = whepUrl_CMHH;
+                connect_play();
+            } catch (error) {
+                updateStatus('连接失败: ');
+                console.error('连接 CMHH 错误:');
+            }
+        }
+        function disconnect() {
+            if (pc) {
+                pc.close();
+                pc = null;
+                updateStatus('已断开连接');
+                document.getElementById('remoteVideo').srcObject = null;
+                
+                // 清除统计定时器
+                if (statsInterval) {
+                    clearInterval(statsInterval);
+                    statsInterval = null;
+                }
+                
+                // 清除统计用的临时变量
+                window._lastBytes = null;
+                window._lastTimestamp = null;
+                
+                // 如果正在全屏，也退出全屏
+                if (isFullscreen) {
+                    toggleFullscreen();
+                }
+            }
+        }
+
+        async function connect_URL() {
+            try {
+                updateStatus('正在连接URL...');
+                
+                // 获取用户输入的URL
+                var pro = document.getElementById('Protocol').value;
+                var room = getTextBoxValue();
+                var userUrl = pro + room;
+                if (!userUrl) {
+                    updateStatus('请输入房间号');
+                    return;
+                }
+                
+                window.whepUrl_ref = userUrl;
+                connect_play();
+            } catch (error) {
+                updateStatus('连接失败: ' + error.message);
+                console.error('连接 URL 错误:', error);
             }
         }
     </script>
