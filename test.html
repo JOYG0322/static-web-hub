@@ -28,7 +28,7 @@ body{
 }
 .title_ img:hover{transform:scale(1.15);cursor:pointer}
 
-/* top controls */
+
 .protocols{display:flex;gap:6px;flex-wrap:wrap}
 .protocol-btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;background:var(--bg-card);color:var(--text-main);transition:0.18s}
 .protocol-btn.active{background:var(--accent);color:#fff}
@@ -39,7 +39,7 @@ body{
 .button_s{margin-left:10px;padding:8px 14px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer;transition:0.18s}
 .button_s:hover{background:#33b6e8}
 
-/* main layout */
+
 .main_{display:flex;gap:18px;margin-top:18px;height:calc(100vh - 80px);flex-wrap:wrap}
 .videoContainer{flex:3;min-width:300px;background:var(--bg-card);border-radius:10px;padding:12px;box-shadow:0 0 12px rgba(0,0,0,0.35);display:flex;flex-direction:column}
 video{width:100%;flex:1;border-radius:10px;background:#000}
@@ -50,11 +50,11 @@ video{width:100%;flex:1;border-radius:10px;background:#000}
 .button_r{background:var(--accent);color:white}
 .button_l:hover,.button_r:hover{background:#33b6e8;transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.28)}
 
-/* side list */
+
 .buttons{flex:1;min-width:220px;display:flex;flex-direction:column;overflow-y:auto;max-height:100%}
 .section-title{font-size:14px;color:var(--text-main);margin:10px 0 4px 0;font-weight:bold;padding-left:6px}
 
-/* channel button */
+
 .button_play{
     display:flex;align-items:center;background:var(--bg-card);border:none;border-radius:10px;padding:10px;margin-bottom:6px;
     color:var(--text-main);cursor:pointer;transition:background 0.2s,transform 0.15s,box-shadow 0.15s;
@@ -69,11 +69,10 @@ video{width:100%;flex:1;border-radius:10px;background:#000}
 .channel_text{font-size:14px}
 .url_text{font-size:11px;color:var(--text-sub);word-break:break-all;margin-left:58px;margin-top:4px}
 
-/* delete */
+
 .delete_btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-main);font-weight:bold;cursor:pointer;font-size:18px;transition:color 0.12s,transform 0.12s}
 .delete_btn:hover{color:#ff4d4d;transform:scale(1.2)}
 
-/* fullscreen overlay */
 .fullscreen-mode{
     position:fixed;top:0;left:0;width:100vw;height:100vh;background:black;z-index:9999;display:flex;flex-direction:column;justify-content:center;align-items:center;
 }
@@ -85,14 +84,14 @@ video{width:100%;flex:1;border-radius:10px;background:#000}
 .fullscreen-controls button{margin:0 5px;color:white;background:var(--bg-hover);border:none;padding:8px 15px;border-radius:3px;cursor:pointer;transition:0.12s}
 .fullscreen-controls button:hover{background:var(--bg-card)}
 
-/* pressed class for JS click feedback (optional) */
+
 .pressed{transform:translateY(0) scale(0.995);box-shadow:0 1px 4px rgba(0,0,0,0.25)}
 
-/* responsive: hide fullscreen button on small screens */
+
 @media (max-width:800px){
     .main_{flex-direction:column}
     .videoContainer{height:300px}
-    /* 隐藏网页全屏按钮（手机端） */
+
     #fullscreenBtn{display:none}
 }
 </style>
@@ -136,15 +135,7 @@ video{width:100%;flex:1;border-radius:10px;background:#000}
 
 <script src="adapter.js"></script>
 <script>
-/**
- * JiBaJiBaPlayer - 封装版
- * 特性：
- *  - 预设频道、历史记录（可删除）
- *  - 协议选择（WHEP/WHIP/RTMP）
- *  - Enter 键连接
- *  - 动效（CSS）与按下反馈（JS）
- *  - 手机端隐藏全屏按钮（通过 CSS 媒体查询）
- */
+
 class JiBaJiBaPlayer {
     constructor(){
         this.pc = null;
@@ -173,7 +164,6 @@ class JiBaJiBaPlayer {
     }
 
     _bindUI(){
-        // protocol buttons
         document.querySelectorAll('.protocol-btn').forEach(btn=>{
             btn.addEventListener('click', ()=>{
                 document.querySelectorAll('.protocol-btn').forEach(b=>b.classList.remove('active'));
@@ -189,10 +179,9 @@ class JiBaJiBaPlayer {
         document.getElementById('disconnectBtn').addEventListener('click', ()=>this.disconnect());
         if(this.fullscreenBtn) this.fullscreenBtn.addEventListener('click', ()=>this.toggleFullscreen());
 
-        // Enter 键连接
+
         this.roomInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') this.connectRoom(); });
 
-        // 全局快捷键
         document.addEventListener('keydown', (e)=>{
             if((e.key === 'f' || e.key === 'F') && !this.isFullscreen && this.video.srcObject) this.toggleFullscreen();
             if(e.key === 'Escape' && this.isFullscreen) this.toggleFullscreen();
@@ -206,18 +195,12 @@ class JiBaJiBaPlayer {
             this.presetContainer.appendChild(btn);
         });
     }
-
-    /**
-     * 创建频道按钮
-     * manual=true 时会把按钮 & url 文本加入历史记录区并附带删除按钮
-     */
+    
     _createChannelButton(name, img, url, manual=false){
         const btn = document.createElement('button');
         btn.className = 'button_play' + (manual ? ' manual' : '');
         btn.type = 'button';
-        // click connect
         btn.addEventListener('click', ()=> this.connectStream(url));
-        // press feedback (adds/removes pressed class briefly)
         btn.addEventListener('mousedown', ()=> btn.classList.add('pressed'));
         document.addEventListener('mouseup', ()=> btn.classList.remove('pressed'));
         btn.addEventListener('mouseleave', ()=> btn.classList.remove('pressed'));
@@ -236,7 +219,6 @@ class JiBaJiBaPlayer {
         btn.appendChild(txt);
 
         if(manual){
-            // url text element must be created before delete handler so it exists in scope
             const urlDiv = document.createElement('div');
             urlDiv.className = 'url_text';
             urlDiv.innerText = url;
@@ -248,14 +230,12 @@ class JiBaJiBaPlayer {
             delBtn.innerText = '×';
             delBtn.addEventListener('click', (e)=>{
                 e.stopPropagation();
-                // remove both elements (button and its url text)
                 if(btn.parentElement) btn.parentElement.removeChild(btn);
                 if(urlDiv.parentElement) urlDiv.parentElement.removeChild(urlDiv);
             });
 
             btn.appendChild(delBtn);
 
-            // append into history container (url under the button for clarity)
             this.historyContainer.appendChild(btn);
             this.historyContainer.appendChild(urlDiv);
         }
@@ -283,7 +263,6 @@ class JiBaJiBaPlayer {
     }
 
     addManualChannel(name, url){
-        // create and append history entry
         this._createChannelButton(name, null, url, true);
     }
 
@@ -301,7 +280,6 @@ class JiBaJiBaPlayer {
     }
 
     async connectStream(url){
-        // disconnect any existing
         this.disconnect();
         this.currentUrl = url;
         this.updateStatus('正在连接...');
@@ -315,7 +293,7 @@ class JiBaJiBaPlayer {
                 this.updateStatus('连接成功 · 正在接收视频');
             };
 
-            // optional: ICE state feedback
+
             this.pc.oniceconnectionstatechange = ()=> {
                 if(this.pc) {
                     const st = this.pc.iceConnectionState;
@@ -326,7 +304,6 @@ class JiBaJiBaPlayer {
             const offer = await this.pc.createOffer();
             await this.pc.setLocalDescription(offer);
 
-            // POST offer.sdp to server (WHEP / WHIP endpoint)
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/sdp' },
@@ -377,39 +354,34 @@ class JiBaJiBaPlayer {
     }
 
     toggleFullscreen(){
-        // if fullscreen is hidden by CSS (mobile), this button won't be visible/clickable,
-        // but the method remains safe to call (no-op on small screens if desired)
         if(!this.isFullscreen){
             // create overlay
             const overlay = document.createElement('div');
             overlay.className = 'fullscreen-mode';
             overlay.id = 'fullscreenContainer';
 
-            // control bar
             const controls = document.createElement('div');
             controls.className = 'fullscreen-controls';
             controls.innerHTML = `<button id="fsDisconnectBtn" type="button">断开</button><button id="fsExitBtn" type="button">退出全屏</button>`;
 
-            // clone video to overlay to avoid moving original node (safer cross-browser)
             const videoClone = this.video.cloneNode(true);
             videoClone.controls = true;
-            // copy srcObject if any
+
             try{ if(this.video.srcObject) videoClone.srcObject = this.video.srcObject; }catch(e){}
 
             overlay.appendChild(videoClone);
             overlay.appendChild(controls);
             document.body.appendChild(overlay);
 
-            // hook buttons
+
             document.getElementById('fsDisconnectBtn').addEventListener('click', ()=> this.disconnect());
             document.getElementById('fsExitBtn').addEventListener('click', ()=> this.toggleFullscreen());
 
-            // hide original video (keeps layout)
             this.video.style.display = 'none';
             if(this.fullscreenBtn) this.fullscreenBtn.textContent = '退出全屏';
             this.isFullscreen = true;
 
-            // hide controls after short delay, show on mousemove
+
             this.fullscreenTimeout = setTimeout(()=> controls.classList.add('hidden'), 1000);
             overlay.addEventListener('mousemove', ()=>{
                 controls.classList.remove('hidden');
@@ -433,7 +405,7 @@ class JiBaJiBaPlayer {
     updateStatus(text){ if(this.statusEl) this.statusEl.innerText = text; }
 }
 
-// create global instance
+
 window.player = new JiBaJiBaPlayer();
 </script>
 </body>
