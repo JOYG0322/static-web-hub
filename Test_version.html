@@ -78,7 +78,7 @@ video{width:100%;flex:1;border-radius:10px;background:#000}
 <body>
 
 <div class="container">
-    <div class="title_"><img src="icon.png" alt="logo">JiBaJiBa</div>
+    <div class="title_"><img src="assets/icon.png" alt="logo">JiBaJiBa</div>
     <div class="protocols" role="tablist" aria-label="协议选择">
         <button class="protocol-btn active" data-proto="whep" aria-pressed="true">WHEP</button>
         <button class="protocol-btn" data-proto="whip">WHIP</button>
@@ -129,9 +129,9 @@ class JiBaJiBaPlayer {
         this.historyContainer = document.getElementById('historyContainer');
 
         this.presetChannels = [
-            { name: '[直播] JOYG', img: 'joyg.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG', streamName: 'JOYG' },
-            { name: '[直播] 超级老鼠', img: 'cmhh.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=CMHH', streamName: 'CMHH' },
-            { name: '[直播] Pure1ove', img: 'pl.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=PL', streamName: 'PL' }
+            { name: '[直播] JOYG', img: 'assets/joyg.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG', streamName: 'JOYG' },
+            { name: '[直播] 超级老鼠', img: 'assets/cmhh.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=CMHH', streamName: 'CMHH' },
+            { name: '[直播] Pure1ove', img: 'assets/pl.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=PL', streamName: 'PL' }
         ];
 
         this._bindUI();
