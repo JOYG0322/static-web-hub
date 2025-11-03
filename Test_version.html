@@ -129,9 +129,9 @@ class JiBaJiBaPlayer {
         this.historyContainer = document.getElementById('historyContainer');
 
         this.presetChannels = [
-            { name: '[直播] JOYG', img: 'joyg.jpg', url: 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=JOYG', streamName: 'JOYG' },
-            { name: '[直播] 超级老鼠', img: 'cmhh.jpg', url: 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=CMHH', streamName: 'CMHH' },
-            { name: '[直播] Pure1ove', img: 'pl.jpg', url: 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=PL', streamName: 'PL' }
+            { name: '[直播] JOYG', img: 'joyg.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG', streamName: 'JOYG' },
+            { name: '[直播] 超级老鼠', img: 'cmhh.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=CMHH', streamName: 'CMHH' },
+            { name: '[直播] Pure1ove', img: 'pl.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=PL', streamName: 'PL' }
         ];
 
         this._bindUI();
@@ -252,7 +252,7 @@ class JiBaJiBaPlayer {
 
     async _checkStreamStatus() {
         try {
-            const response = await fetch('http://10.126.126.10:1985/api/v1/streams/');
+            const response = await fetch('http://10.126.126.15:1985/api/v1/streams/');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             
@@ -322,9 +322,9 @@ class JiBaJiBaPlayer {
     generateUrl(room){
         if(!room) return null;
         switch(this.currentProto){
-            case 'whep': return `http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=${room}`;
-            case 'whip': return `http://10.126.126.10:1985/rtc/v1/whip/?app=live&stream=${room}`;
-            case 'rtmp': return `rtmp://10.126.126.10/live/${room}`;
+            case 'whep': return `http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=${room}`;
+            case 'whip': return `http://10.126.126.15:1985/rtc/v1/whip/?app=live&stream=${room}`;
+            case 'rtmp': return `rtmp://10.126.126.15/live/${room}`;
             default: return null;
         }
     }
