@@ -248,6 +248,12 @@
             float: left;
         }
 
+        .logo {
+            height: 50px;
+            width: 50px;
+            background-color: var(--caution-color);
+        }
+
         .Protocol {
             width: 10%;
             border-style:solid;
@@ -337,7 +343,7 @@
     <div class="browser-warning" id="browserWarning"></div>
     
     <div class="container">
-        <div class="title_"><img src="icon.png">JiBaJiBa</div>
+        <div class="title_"><img src="icon.png" class="logo"> JiBaJiBa</div>
         <div class="search_">
             <select id="Protocol" name="Protocol" class="Protocol">
                 <option value="http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=">WHEP</option>
@@ -362,9 +368,9 @@
             </div>
         </div>
         <div class="buttons">
-            <button onclick="connect_CMHH()" class="button_play"><img src="http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=CMHH" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
-            <button onclick="connect_JOYG()" class="button_play"><img src="http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=JOYG" class="head_img" streamname="JOYG">[直播]JOYG</button>
-            <button onclick="connect_PL()" class="button_play"><img src="http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=PL" class="head_img" streamname="PL">[直播]Pure1ove</button>
+            <button onclick="connect_CMHH()" class="button_play"><img src="cmhh.jpg" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
+            <button onclick="connect_JOYG()" class="button_play"><img src="joyg.jpg" class="head_img" streamname="JOYG">[直播]JOYG</button>
+            <button onclick="connect_PL()" class="button_play"><img src="pl.jpg" class="head_img" streamname="PL">[直播]Pure1ove</button>
         </div>
     </div>
     
