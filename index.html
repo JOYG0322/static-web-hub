@@ -342,12 +342,12 @@
     <div class="browser-warning" id="browserWarning"></div>
     
     <div class="container">
-        <div class="title_"><img src="icon.png" class="logo"> JiBaJiBa</div>
+        <div class="title_"><img src="assets/icon.png" class="logo"> JiBaJiBa</div>
         <div class="search_">
             <select id="Protocol" name="Protocol" class="Protocol">
-                <option value="http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=">WHEP</option>
-                <option value="http://10.126.126.10:1985/rtc/v1/whip/?app=live&stream=">WHIP</option>
-                <option value="rtmp://10.126.126.10/live/">RTMP</option>
+                <option value="http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=">WHEP</option>
+                <option value="http://10.126.126.15:1985/rtc/v1/whip/?app=live&stream=">WHIP</option>
+                <option value="rtmp://10.126.126.15/live/">RTMP</option>
             </select>
             <div class="search__">
                 <input type="text" placeholder="输入房间号" id="userenter" value="" class="text_enter">
@@ -367,9 +367,9 @@
             </div>
         </div>
         <div class="buttons">
-            <button onclick="connect_CMHH()" class="button_play"><img src="cmhh.jpg" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
-            <button onclick="connect_JOYG()" class="button_play"><img src="joyg.jpg" class="head_img" streamname="JOYG">[直播]JOYG</button>
-            <button onclick="connect_PL()" class="button_play"><img src="pl.jpg" class="head_img" streamname="PL">[直播]Pure1ove</button>
+            <button onclick="connect_CMHH()" class="button_play"><img src="assets/cmhh.jpg" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
+            <button onclick="connect_JOYG()" class="button_play"><img src="assets/joyg.jpg" class="head_img" streamname="JOYG">[直播]JOYG</button>
+            <button onclick="connect_PL()" class="button_play"><img src="assets/pl.jpg" class="head_img" streamname="PL">[直播]Pure1ove</button>
         </div>
     </div>
     
@@ -378,9 +378,9 @@
     <script>
         let pc = null;
         let isFullscreen = false;
-        const whepUrl_JOYG = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=JOYG';
-        const whepUrl_CMHH = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=CMHH';
-        const whepUrl_PL = 'http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=PL';
+        const whepUrl_JOYG = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG';
+        const whepUrl_CMHH = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=CMHH';
+        const whepUrl_PL = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=PL';
         window.whepUrl_ref = ''
 
         function isMobileDevice() {
@@ -690,7 +690,7 @@
                 // 修复函数定义 - 添加 function 关键字
         async function _checkStreamStatus() {
             try {
-                const response = await fetch('http://10.126.126.10:1985/api/v1/streams/');
+                const response = await fetch('http://10.126.126.15:1985/api/v1/streams/');
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 
