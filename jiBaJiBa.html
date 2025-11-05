@@ -56,8 +56,7 @@ video{width:100%;flex:1;border-radius:10px;background:#000}
     <div class="title_"><img src="assets/icon.png" alt="logo">JiBaJiBa</div>
     <div class="protocols" role="tablist" aria-label="协议选择">
         <button class="protocol-btn active" data-proto="whep" aria-pressed="true">WHEP</button>
-        <button class="protocol-btn" data-proto="whip">WHIP</button>
-        <button class="protocol-btn" data-proto="rtmp">RTMP</button>
+        <button class="protocol-btn" data-proto="hls">HLS</button>
     </div>
     <div class="search_">
         <input id="roomInput" type="text" placeholder="输入房间号" class="text_enter" aria-label="房间号">
@@ -135,7 +134,7 @@ class JiBaJiBaPlayer {
             
             switch(e.key){
                 case 'f': case 'F':
-                    if(!this.isFullscreen && this.video.srcObject) this.toggleFullscreen();
+                    if(!this.isFullscreen && (this.video.srcObject || this.video.src)) this.toggleFullscreen();
                     break;
                 case 'Escape':
                     if(this.isFullscreen) this.toggleFullscreen();
@@ -147,13 +146,13 @@ class JiBaJiBaPlayer {
                     this.disconnect();
                     break;
                 case '1':
-                    if(this.presetChannels[0]) this.connectStream(this.presetChannels[0].url);
+                    if(this.presetChannels[0]) this.connectStream(this.presetChannels[0].url, 'whep');
                     break;
                 case '2':
-                    if(this.presetChannels[1]) this.connectStream(this.presetChannels[1].url);
+                    if(this.presetChannels[1]) this.connectStream(this.presetChannels[1].url, 'whep');
                     break;
                 case '3':
-                    if(this.presetChannels[2]) this.connectStream(this.presetChannels[2].url);
+                    if(this.presetChannels[2]) this.connectStream(this.presetChannels[2].url, 'whep');
                     break;
             }
         });
@@ -162,17 +161,17 @@ class JiBaJiBaPlayer {
     _loadPresetChannels(){
         this.presetContainer.innerHTML = '';
         this.presetChannels.forEach((ch, index)=>{
-            const btn = this._createChannelButton(ch.name, ch.img, ch.url, false);
+            const btn = this._createChannelButton(ch.name, ch.img, ch.url, false, 'whep');
             btn.setAttribute('data-hotkey', index + 1);
             this.presetContainer.appendChild(btn);
         });
     }
 
-    _createChannelButton(name, img, url, manual=false){
+    _createChannelButton(name, img, url, manual=false, proto='whep'){
         const btn = document.createElement('button');
         btn.className = 'button_play' + (manual ? ' manual' : '');
         btn.type = 'button';
-        btn.addEventListener('click', ()=> this.connectStream(url));
+        btn.addEventListener('click', ()=> this.connectStream(url, proto));
         btn.addEventListener('mousedown', ()=> btn.classList.add('pressed'));
         document.addEventListener('mouseup', ()=> btn.classList.remove('pressed'));
         btn.addEventListener('mouseleave', ()=> btn.classList.remove('pressed'));
@@ -218,8 +217,7 @@ class JiBaJiBaPlayer {
         if(!room) return null;
         switch(this.currentProto){
             case 'whep': return `http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=${room}`;
-            case 'whip': return `http://10.126.126.15:1985/rtc/v1/whip/?app=live&stream=${room}`;
-            case 'rtmp': return `rtmp://10.126.126.15/live/${room}`;
+            case 'hls': return `http://localhost:8080/live/${room}.m3u8`;
             default: return null;
         }
     }
@@ -229,31 +227,53 @@ class JiBaJiBaPlayer {
         if(!room) return;
         const url = this.generateUrl(room);
         if(!url) return;
-        this.connectStream(url);
-        this.addManualChannel(room, url);
+        this.connectStream(url, this.currentProto);
+        this.addManualChannel(room, url, this.currentProto);
     }
 
-    addManualChannel(name, url){
-        this._createChannelButton(name, null, url, true);
+    addManualChannel(name, url, proto){
+        this._createChannelButton(name, null, url, true, proto);
     }
 
     refresh(){
-        if(this.currentUrl) this.connectStream(this.currentUrl);
+        if(this.currentUrl) this.connectStream(this.currentUrl, this.currentProto);
     }
 
     disconnect(){
         if(this.pc){ try{ this.pc.close(); }catch(e){} this.pc = null; }
         if(this.statsInterval){ clearInterval(this.statsInterval); this.statsInterval = null; }
-        try{ this.video.srcObject = null; }catch(e){}
+        try{ 
+            this.video.srcObject = null; 
+            this.video.src = '';
+            this.video.load();
+        }catch(e){}
         this.updateStatus('已断开连接');
         window._lastBytes = 0;
         if(this.isFullscreen) this.toggleFullscreen();
     }
 
-    async connectStream(url){
+    async connectStream(url, proto){
         this.disconnect();
         this.currentUrl = url;
+        this.currentProto = proto;
         this.updateStatus('正在连接...');
+        
+        // HLS播放流
+        if(proto === 'hls'){
+            try{
+                this.video.src = url;
+                this.video.load();
+                await this.video.play();
+                this.updateStatus('HLS连接成功 · 正在播放');
+                this._startHLSStats();
+            }catch(e){
+                console.error('HLS连接失败', e);
+                this.updateStatus(`HLS连接失败: ${e.message}`);
+            }
+            return;
+        }
+        
+        // WebRTC播放流
         try{
             this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
             this.pc.addTransceiver('video', { direction: 'recvonly' });
@@ -320,6 +340,20 @@ class JiBaJiBaPlayer {
         }, 1000);
     }
 
+    _startHLSStats(){
+        if(this.statsInterval) clearInterval(this.statsInterval);
+        this.statsInterval = setInterval(() => {
+            if(this.video.readyState > 0){
+                const buffered = this.video.buffered;
+                let bufferedTime = 0;
+                if(buffered.length > 0){
+                    bufferedTime = buffered.end(buffered.length - 1) - this.video.currentTime;
+                }
+                this.updateStatus(`HLS播放中 · 缓冲: ${bufferedTime.toFixed(1)}秒`);
+            }
+        }, 2000);
+    }
+
     toggleFullscreen(){
         if(!this.isFullscreen){
             const overlay = document.createElement('div');
@@ -332,7 +366,10 @@ class JiBaJiBaPlayer {
 
             const videoClone = this.video.cloneNode(true);
             videoClone.controls = true;
-            try{ if(this.video.srcObject) videoClone.srcObject = this.video.srcObject; }catch(e){}
+            try{ 
+                if(this.video.srcObject) videoClone.srcObject = this.video.srcObject;
+                if(this.video.src) videoClone.src = this.video.src;
+            }catch(e){}
 
             overlay.appendChild(videoClone);
             overlay.appendChild(controls);
