@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>WebRTC 网页播放器</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{
+  --bg-dark:#0f0f0f;
+  --bg-card:#1b1b1b;
+  --bg-hover:#2b2b2b;
+  --text-main:#f1f1f1;
+  --text-sub:#aaaaaa;
+  --accent:#00a1d6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:20px;
+  background:var(--bg-dark);
+  color:var(--text-main);
+  font-family:"Segoe UI",sans-serif;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-height:100vh;
+}
+.header{
+  text-align:center;
+  margin-bottom:30px;
+}
+.header h1{
+  margin:0;
+  font-size:2rem;
+}
+.header p{
+  color:var(--text-sub);
+  font-size:1rem;
+  margin-top:8px;
+}
+.time{
+  font-size:0.9rem;
+  color:var(--accent);
+  margin-top:5px;
+}
+.button_card{
+  width:80%;
+  max-width:500px;
+  background:var(--bg-card);
+  color:var(--text-main);
+  border:none;
+  border-radius:12px;
+  padding:20px;
+  margin:15px 0;
+  text-align:center;
+  font-size:1.3rem;
+  cursor:pointer;
+  transition:0.2s;
+  box-shadow:0 0 10px rgba(0,0,0,0.4);
+}
+.button_card:hover{
+  background:var(--bg-hover);
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,0.5);
+}
+.button_card p{
+  font-size:0.9rem;
+  color:var(--text-sub);
+  margin-top:8px;
+}
+@media(max-width:600px){
+  .button_card{font-size:1.1rem;padding:15px;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>WebRTC 网页播放器</h1>
+  <p>使用 SRS（Simple Realtime Server）实现的 WebRTC 协议网页播放器，支持低延迟观看和轻量化使用。</p>
+  <p>由于WebRTC早已成为RFC正式标准，因此各种只要是能使用浏览器的设备都可以实现屏幕共享以及观看，浏览器自身的安全限制不算。</p>
+  <div class="time" id="timeDisplay"></div>
+</div>
+
+<button class="button_card" onclick="window.open('https://10.126.126.15/deertube','_blank')">
+  deertube播放器
+  <p>CMHH编写的最初更新版本</p>
+</button>
+
+<button class="button_card" onclick="window.open('https://10.126.126.15/jiBaJiBa','_blank')">
+  jiBaJiBa播放器
+  <p>AI协助生成的分支版本播放器，至今没人能理解AI在写什么</p>
+</button>
+
+<script>
+// 动态显示当前时间
+function updateTime(){
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('timeDisplay').textContent = `当前时间: ${h}:${m}:${s}`;
+}
+setInterval(updateTime,1000);
+updateTime();
+</script>
+
+</body>
+</html>
