@@ -17,6 +17,11 @@ body{background:linear-gradient(180deg,#070707 0%, #0f0f0f 60%);color:var(--text
 .huge{font-size:72px;font-weight:800;letter-spacing:2px;margin:0;color:var(--text-main)}
 .title{font-size:18px;color:var(--text-sub);margin-top:6px}
 .desc{margin-top:12px;color:var(--text-sub);line-height:1.6}
+
+/* 超链接颜色：使用主题强调色，悬停时略亮 */
+.desc a{color:var(--accent);text-decoration:underline}
+.desc a:hover{color:#33b6e8}
+
 .actions{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
 .btn{padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-size:14px;transition:transform .12s,box-shadow .12s}
 .btn-primary{background:var(--accent);color:#fff}
@@ -45,7 +50,7 @@ body{background:linear-gradient(180deg,#070707 0%, #0f0f0f 60%);color:var(--text
         <h1 id="errTitle" class="huge">404</h1>
         <div id="errDesc" class="title">页面未找到</div>
 
-        <p class="desc">抱歉，您访问的页面不存在或已被移除。可以返回主页面继续浏览，也可以输入正确的房间号直接连接直播流。</p>
+        <p class="desc">抱歉，您访问的页面不存在或已被移除。可以返回<a href="http://10.126.126.15/">主页</a >继续浏览</p>
 
         <div class="actions" role="toolbar">
             <button class="btn btn-primary" id="homeBtn" type="button" title="回到主页面">返回 JiBaJiBa</button>
