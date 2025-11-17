@@ -1,821 +1,569 @@
 <!DOCTYPE html>
-
 <html lang="zh">
-
 <head>
-
-<meta charset="UTF-8">
-
-<title>JiBaJiBa v4.3 优化版（更新）</title>
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<style>
-
-:root{--bg-dark:#1a1a1a;--bg-card:#2c2c2c;--bg-hover:#3e3e3e;--text-main:#e0e0e0;--text-sub:#cccccc;--accent:#00a1d6}
-
-*{box-sizing:border-box}
-
-body{margin:0;padding:15px;background:var(--bg-dark);color:var(--text-main);font-family:"Segoe UI",sans-serif}
-
-.container{display:flex;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px}
-
-.title_{display:flex;align-items:center;font-size:26px;font-weight:bold}
-
-.title_ img{height:38px;margin-right:10px;border-radius:8px;transition:transform 0.2s ease}
-
-.title_ img:hover{transform:scale(1.15);cursor:pointer}
-
-.protocols{display:flex;gap:6px;flex-wrap:wrap}
-
-.protocol-btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;background:var(--bg-card);color:var(--text-main);transition:0.18s}
-
-.protocol-btn.active{background:var(--accent);color:#fff}
-
-.protocol-btn:hover{background:var(--bg-hover)}
-
-.search_{display:flex;flex:1;min-width:200px}
-
-.text_enter{flex:1;background:var(--bg-card);border:1px solid var(--bg-hover);border-radius:6px;padding:8px;color:var(--text-main)}
-
-.button_s{margin-left:10px;padding:8px 14px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer;transition:0.18s}
-
-.button_s:hover{background:#33b6e8}
-
-.main_{display:flex;gap:18px;margin-top:18px;height:calc(100vh - 80px);flex-wrap:wrap}
-
-.videoContainer{flex:3;min-width:300px;background:var(--bg-card);border-radius:10px;padding:12px;box-shadow:0 0 12px rgba(0,0,0,0.35);display:flex;flex-direction:column}
-
-video{width:100%;flex:1;border-radius:10px;background:#000}
-
-.status{margin-top:6px;font-size:13px;color:var(--text-sub)}
-
-.controls{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
-
-.button_l,.button_r{height:30px;padding:0 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;transition:transform 0.12s, box-shadow 0.12s, background 0.12s}
-
-.button_l{background:var(--bg-hover);color:var(--text-main)}
-
-.button_r{background:var(--accent);color:white}
-
-.button_l:hover,.button_r:hover{background:#33b6e8;transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.28)}
-
-.buttons{flex:1;min-width:220px;display:flex;flex-direction:column;overflow-y:auto;max-height:100%}
-
-.section-title{font-size:14px;color:var(--text-main);margin:10px 0 4px 0;font-weight:bold;padding-left:6px}
-
-.button_play{display:flex;align-items:center;background:var(--bg-card);border:none;border-radius:10px;padding:10px;margin-bottom:6px;color:var(--text-main);cursor:pointer;transition:background 0.2s,transform 0.15s,box-shadow 0.15s;height:60px;width:100%;position:relative;overflow:hidden}
-
-.button_play.manual{height:45px}
-
-.button_play:hover{background:var(--bg-hover);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,0.45)}
-
-.button_play:active{transform:translateY(0);box-shadow:0 2px 6px rgba(0,0,0,0.3)}
-
-.head_img{width:48px;height:48px;border-radius:50%;margin-right:10px;object-fit:cover}
-
-.channel_text{font-size:14px}
-
-.url_text{font-size:11px;color:var(--text-sub);word-break:break-all;margin-left:58px;margin-top:4px}
-
-.delete_btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-main);font-weight:bold;cursor:pointer;font-size:18px;transition:color 0.12s,transform 0.12s}
-
-.delete_btn:hover{color:#ff4d4d;transform:scale(1.2)}
-
-.fullscreen-mode{position:fixed;top:0;left:0;width:100vw;height:100vh;background:black;z-index:9999;display:flex;flex-direction:column;justify-content:center;align-items:center}
-
-.fullscreen-mode video{width:100%;height:100%;object-fit:contain}
-
-.fullscreen-controls{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);padding:10px;border-radius:5px;z-index:10000;opacity:1;transition:opacity 0.25s}
-
-.fullscreen-controls.hidden{opacity:0;pointer-events:none}
-
-.fullscreen-controls button{margin:0 5px;color:white;background:var(--bg-hover);border:none;padding:8px 15px;border-radius:3px;cursor:pointer;transition:0.12s}
-
-.fullscreen-controls button:hover{background:var(--bg-card)}
-
-.pressed{transform:translateY(0) scale(0.995);box-shadow:0 1px 4px rgba(0,0,0,0.25)}
-
-@media (max-width:800px){.main_{flex-direction:column}.videoContainer{height:300px}#fullscreenBtn{display:none}}
-
-</style>
-
+    <meta charset="UTF-8">
+    <title>JiBaJiBa v4.3 优化版（更新）</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        :root {
+            --bg-dark: #1a1a1a;
+            --bg-card: #2c2c2c;
+            --bg-hover: #3e3e3e;
+            --text-main: #e0e0e0;
+            --text-sub: #cccccc;
+            --accent: #00a1d6;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 15px;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: "Segoe UI", sans-serif;
+        }
+        .container { display: flex; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        .title_ { display: flex; align-items: center; font-size: 26px; font-weight: bold; }
+        .title_ img { height: 38px; margin-right: 10px; border-radius: 8px; transition: transform 0.2s ease; }
+        .title_ img:hover { transform: scale(1.15); cursor: pointer; }
+        .protocols { display: flex; gap: 6px; flex-wrap: wrap; }
+        .protocol-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            background: var(--bg-card);
+            color: var(--text-main);
+            transition: 0.18s;
+        }
+        .protocol-btn.active { background: var(--accent); color: #fff; }
+        .protocol-btn:hover { background: var(--bg-hover); }
+        .search_ { display: flex; flex: 1; min-width: 200px; }
+        .text_enter {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--bg-hover);
+            border-radius: 6px;
+            padding: 8px;
+            color: var(--text-main);
+        }
+        .button_s {
+            margin-left: 10px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            transition: 0.18s;
+        }
+        .button_s:hover { background: #33b6e8; }
+        .main_ {
+            display: flex;
+            gap: 18px;
+            margin-top: 18px;
+            height: calc(100vh - 80px);
+            flex-wrap: wrap;
+        }
+        .videoContainer {
+            flex: 3;
+            min-width: 300px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.35);
+            display: flex;
+            flex-direction: column;
+        }
+        video { width: 100%; flex: 1; border-radius: 10px; background: #000; }
+        .status { margin-top: 6px; font-size: 13px; color: var(--text-sub); }
+        .controls { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+        .button_l, .button_r {
+            height: 30px;
+            padding: 0 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+        }
+        .button_l { background: var(--bg-hover); color: var(--text-main); }
+        .button_r { background: var(--accent); color: white; }
+        .button_l:hover, .button_r:hover {
+            background: #33b6e8;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.28);
+        }
+        .buttons {
+            flex: 1;
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            max-height: 100%;
+        }
+        .section-title {
+            font-size: 14px;
+            color: var(--text-main);
+            margin: 10px 0 4px 0;
+            font-weight: bold;
+            padding-left: 6px;
+        }
+        .button_play {
+            display: flex;
+            align-items: center;
+            background: var(--bg-card);
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 6px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+            height: 60px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .button_play.manual { height: 45px; }
+        .button_play:hover {
+            background: var(--bg-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+        }
+        .button_play:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .head_img { width: 48px; height: 48px; border-radius: 50%; margin-right: 10px; object-fit: cover; }
+        .channel_text { font-size: 14px; }
+        .url_text {
+            font-size: 11px;
+            color: var(--text-sub);
+            word-break: break-all;
+            margin-left: 58px;
+            margin-top: 4px;
+        }
+        .delete_btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.12s, transform 0.12s;
+        }
+        .delete_btn:hover { color: #ff4d4d; transform: scale(1.2); }
+        .fullscreen-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .fullscreen-mode video { width: 100%; height: 100%; object-fit: contain; }
+        .fullscreen-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10000;
+            opacity: 1;
+            transition: opacity 0.25s;
+        }
+        .fullscreen-controls.hidden { opacity: 0; pointer-events: none; }
+        .fullscreen-controls button {
+            margin: 0 5px;
+            color: white;
+            background: var(--bg-hover);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: 0.12s;
+        }
+        .fullscreen-controls button:hover { background: var(--bg-card); }
+        .pressed { transform: translateY(0) scale(0.995); box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
+        @media (max-width: 800px) {
+            .main_ { flex-direction: column; }
+            .videoContainer { height: 300px; }
+            #fullscreenBtn { display: none; }
+        }
+    </style>
 </head>
-
 <body>
-
-
-
-<div class="container">
-
-    <div class="title_"><img src="assets/icon.png" alt="logo">JiBaJiBa</div>
-
-    <div class="protocols" role="tablist" aria-label="协议选择">
-
-        <button class="protocol-btn active" data-proto="whep" aria-pressed="true">WHEP</button>
-
-        <button class="protocol-btn" data-proto="hls">HLS</button>
-
+    <div class="container">
+        <div class="title_"><img src="assets/icon.png" alt="logo">JiBaJiBa</div>
+        <div class="protocols" role="tablist" aria-label="协议选择">
+            <button class="protocol-btn active" data-proto="whep" aria-pressed="true">WHEP</button>
+            <button class="protocol-btn" data-proto="hls">HLS</button>
+        </div>
+        <div class="search_">
+            <input id="roomInput" type="text" placeholder="输入房间号" class="text_enter" aria-label="房间号">
+            <button class="button_s" id="connectBtn">连接</button>
+        </div>
     </div>
 
-    <div class="search_">
-
-        <input id="roomInput" type="text" placeholder="输入房间号" class="text_enter" aria-label="房间号">
-
-        <button class="button_s" id="connectBtn">连接</button>
-
-    </div>
-
-</div>
-
-
-
-<div class="main_">
-
-    <div class="videoContainer" aria-live="polite">
-
-        <video id="remoteVideo" autoplay playsinline muted controls></video>
-
-        <div id="status" class="status">未连接</div>
-
-        <div class="controls" role="toolbar">
-
-            <button class="button_l" id="refreshBtn">刷新</button>
-
-            <button class="button_l" id="disconnectBtn">断开</button>
-
-            <button class="button_l" id="fullscreenBtn">网页全屏</button>
-
+    <div class="main_">
+        <div class="videoContainer" aria-live="polite">
+            <video id="remoteVideo" autoplay playsinline muted controls></video>
+            <div id="status" class="status">未连接</div>
+            <div class="controls" role="toolbar">
+                <button class="button_l" id="refreshBtn">刷新</button>
+                <button class="button_l" id="disconnectBtn">断开</button>
+                <button class="button_l" id="fullscreenBtn">网页全屏</button>
+            </div>
         </div>
 
+        <div class="buttons" id="channelList">
+            <div class="section-title">预设频道</div>
+            <div id="presetContainer" aria-label="预设频道"></div>
+            <div class="section-title">历史记录</div>
+            <div id="historyContainer" aria-label="历史记录"></div>
+        </div>
     </div>
 
-    <div class="buttons" id="channelList">
-
-        <div class="section-title">预设频道</div>
-
-        <div id="presetContainer" aria-label="预设频道"></div>
-
-        <div class="section-title">历史记录</div>
-
-        <div id="historyContainer" aria-label="历史记录"></div>
-
-    </div>
-
-</div>
-
-
-
-<script src="adapter.js"></script>
-
-<script>
-
-class JiBaJiBaPlayer {
-
-    constructor(){
-
-        this.pc = null;
-
-        this.currentUrl = null;
-
-        this.statsInterval = null;
-
-        this.isFullscreen = false;
-
-        this.fullscreenTimeout = null;
-
-        this.currentProto = 'whep';
-
-
-
-        this.video = document.getElementById('remoteVideo');
-
-        this.statusEl = document.getElementById('status');
-
-        this.fullscreenBtn = document.getElementById('fullscreenBtn');
-
-        this.roomInput = document.getElementById('roomInput');
-
-        this.presetContainer = document.getElementById('presetContainer');
-
-        this.historyContainer = document.getElementById('historyContainer');
-
-
-
-        this.presetChannels = [
-
-            { name: '[直播] JOYG', img: 'assets/joyg.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG' },
-
-            { name: '[直播] CMHH', img: 'assets/cmhh.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=CMHH' },
-
-            { name: '[直播] Pure1ove', img: 'assets/pl.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=PL' }
-
-        ];
-
-
-
-        this._bindUI();
-
-        this._loadPresetChannels();
-
-        this.updateStatus('就绪 - 点击频道或输入房间号开始播放');
-
-    }
-
-
-
-    _bindUI(){
-
-        document.querySelectorAll('.protocol-btn').forEach(btn=>{
-
-            btn.addEventListener('click', ()=>{
-
-                document.querySelectorAll('.protocol-btn').forEach(b=>b.classList.remove('active'));
-
-                document.querySelectorAll('.protocol-btn').forEach(b=>b.setAttribute('aria-pressed','false'));
-
-                btn.classList.add('active');
-
-                btn.setAttribute('aria-pressed','true');
-
-                this.currentProto = btn.dataset.proto;
-
-            });
-
-        });
-
-
-
-        document.getElementById('connectBtn').addEventListener('click', ()=>this.connectRoom());
-
-        document.getElementById('refreshBtn').addEventListener('click', ()=>this.refresh());
-
-        document.getElementById('disconnectBtn').addEventListener('click', ()=>this.disconnect());
-
-        if(this.fullscreenBtn) this.fullscreenBtn.addEventListener('click', ()=>this.toggleFullscreen());
-
-
-
-        this.roomInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') this.connectRoom(); });
-
-
-
-        document.addEventListener('keydown', (e)=>{
-
-            if(e.target.tagName === 'INPUT') return;
-
-            
-
-            switch(e.key){
-
-                case 'f': case 'F':
-
-                    if(!this.isFullscreen && (this.video.srcObject || this.video.src)) this.toggleFullscreen();
-
-                    break;
-
-                case 'Escape':
-
-                    if(this.isFullscreen) this.toggleFullscreen();
-
-                    break;
-
-                case 's': case 'S':
-
-                    this.refresh();
-
-                    break;
-
-                case 'd': case 'D':
-
-                    this.disconnect();
-
-                    break;
-
-                case '1':
-
-                    if(this.presetChannels[0]) this.connectStream(this.presetChannels[0].url, 'whep');
-
-                    break;
-
-                case '2':
-
-                    if(this.presetChannels[1]) this.connectStream(this.presetChannels[1].url, 'whep');
-
-                    break;
-
-                case '3':
-
-                    if(this.presetChannels[2]) this.connectStream(this.presetChannels[2].url, 'whep');
-
-                    break;
-
+    <script src="adapter.js"></script>
+    <script>
+        class JiBaJiBaPlayer {
+            constructor() {
+                this.pc = null;
+                this.currentUrl = null;
+                this.statsInterval = null;
+                this.isFullscreen = false;
+                this.fullscreenTimeout = null;
+                this.currentProto = 'whep';
+
+                this.video = document.getElementById('remoteVideo');
+                this.statusEl = document.getElementById('status');
+                this.fullscreenBtn = document.getElementById('fullscreenBtn');
+                this.roomInput = document.getElementById('roomInput');
+                this.presetContainer = document.getElementById('presetContainer');
+                this.historyContainer = document.getElementById('historyContainer');
+
+                this.presetChannels = [
+                    { name: '[直播] JOYG', img: 'assets/joyg.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG' },
+                    { name: '[直播] CMHH', img: 'assets/cmhh.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=CMHH' },
+                    { name: '[直播] Pure1ove', img: 'assets/pl.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=PL' }
+                ];
+
+                this._bindUI();
+                this._loadPresetChannels();
+                this.updateStatus('就绪 - 点击频道或输入房间号开始播放');
             }
 
-        });
-
-    }
-
-
-
-    _loadPresetChannels(){
-
-        this.presetContainer.innerHTML = '';
-
-        this.presetChannels.forEach((ch, index)=>{
-
-            const btn = this._createChannelButton(ch.name, ch.img, ch.url, false, 'whep');
-
-            btn.setAttribute('data-hotkey', index + 1);
-
-            this.presetContainer.appendChild(btn);
-
-        });
-
-    }
-
-
-
-    _createChannelButton(name, img, url, manual=false, proto='whep'){
-
-        const btn = document.createElement('button');
-
-        btn.className = 'button_play' + (manual ? ' manual' : '');
-
-        btn.type = 'button';
-
-        btn.addEventListener('click', ()=> this.connectStream(url, proto));
-
-        btn.addEventListener('mousedown', ()=> btn.classList.add('pressed'));
-
-        document.addEventListener('mouseup', ()=> btn.classList.remove('pressed'));
-
-        btn.addEventListener('mouseleave', ()=> btn.classList.remove('pressed'));
-
-
-
-        if(img){
-
-            const imgEl = document.createElement('img');
-
-            imgEl.className = 'head_img';
-
-            imgEl.src = img;
-
-            imgEl.alt = '';
-
-            btn.appendChild(imgEl);
-
-        }
-
-
-
-        const txt = document.createElement('div');
-
-        txt.className = 'channel_text';
-
-        txt.innerText = name;
-
-        btn.appendChild(txt);
-
-
-
-        if(manual){
-
-            const urlDiv = document.createElement('div');
-
-            urlDiv.className = 'url_text';
-
-            urlDiv.innerText = url;
-
-
-
-            const delBtn = document.createElement('button');
-
-            delBtn.className = 'delete_btn';
-
-            delBtn.type = 'button';
-
-            delBtn.title = '删除记录';
-
-            delBtn.innerText = '×';
-
-            delBtn.addEventListener('click', (e)=>{
-
-                e.stopPropagation();
-
-                if(btn.parentElement) btn.parentElement.removeChild(btn);
-
-                if(urlDiv.parentElement) urlDiv.parentElement.removeChild(urlDiv);
-
-            });
-
-
-
-            btn.appendChild(delBtn);
-
-            this.historyContainer.appendChild(btn);
-
-            this.historyContainer.appendChild(urlDiv);
-
-        }
-
-
-
-        return btn;
-
-    }
-
-
-
-    generateUrl(room){
-
-        if(!room) return null;
-
-        switch(this.currentProto){
-
-            case 'whep': return `http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=${room}`;
-
-            case 'hls': return `http://localhost:8080/live/${room}.m3u8`;
-
-            default: return null;
-
-        }
-
-    }
-
-
-
-    connectRoom(){
-
-        const room = this.roomInput.value.trim();
-
-        if(!room) return;
-
-        const url = this.generateUrl(room);
-
-        if(!url) return;
-
-        this.connectStream(url, this.currentProto);
-
-        this.addManualChannel(room, url, this.currentProto);
-
-    }
-
-
-
-    addManualChannel(name, url, proto){
-
-        this._createChannelButton(name, null, url, true, proto);
-
-    }
-
-
-
-    refresh(){
-
-        if(this.currentUrl) this.connectStream(this.currentUrl, this.currentProto);
-
-    }
-
-
-
-    disconnect(){
-
-        if(this.pc){ try{ this.pc.close(); }catch(e){} this.pc = null; }
-
-        if(this.statsInterval){ clearInterval(this.statsInterval); this.statsInterval = null; }
-
-        try{ 
-
-            this.video.srcObject = null; 
-
-            this.video.src = '';
-
-            this.video.load();
-
-        }catch(e){}
-
-        this.updateStatus('已断开连接');
-
-        window._lastBytes = 0;
-
-        if(this.isFullscreen) this.toggleFullscreen();
-
-    }
-
-
-
-    async connectStream(url, proto){
-
-        this.disconnect();
-
-        this.currentUrl = url;
-
-        this.currentProto = proto;
-
-        this.updateStatus('正在连接...');
-
-        
-
-        // HLS播放流
-
-        if(proto === 'hls'){
-
-            try{
-
-                this.video.src = url;
-
-                this.video.load();
-
-                await this.video.play();
-
-                this.updateStatus('HLS连接成功 · 正在播放');
-
-                this._startHLSStats();
-
-            }catch(e){
-
-                console.error('HLS连接失败', e);
-
-                this.updateStatus(`HLS连接失败: ${e.message}`);
-
-            }
-
-            return;
-
-        }
-
-        
-
-        // WebRTC播放流
-
-        try{
-
-            this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-
-            this.pc.addTransceiver('video', { direction: 'recvonly' });
-
-            this.pc.addTransceiver('audio', { direction: 'recvonly' });
-
-
-
-            this.pc.ontrack = (e)=>{
-
-                try{ this.video.srcObject = e.streams[0]; }catch(err){}
-
-                this.updateStatus('连接成功 · 正在接收视频');
-
-            };
-
-
-
-            this.pc.oniceconnectionstatechange = ()=> {
-
-                if(this.pc) {
-
-                    const st = this.pc.iceConnectionState;
-
-                    if(st === 'failed' || st === 'disconnected') this.updateStatus(`ICE: ${st}`);
-
-                }
-
-            };
-
-
-
-            const offer = await this.pc.createOffer();
-
-            await this.pc.setLocalDescription(offer);
-
-
-
-            const response = await fetch(url, {
-
-                method: 'POST',
-
-                headers: { 'Content-Type': 'application/sdp' },
-
-                body: offer.sdp
-
-            });
-
-
-
-            if(!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            const answer = await response.text();
-
-            await this.pc.setRemoteDescription({ type: 'answer', sdp: answer });
-
-
-
-            this._startStats();
-
-        }catch(e){
-
-            console.error('连接失败', e);
-
-            this.updateStatus(`连接失败: ${e.message}`);
-
-            this.disconnect();
-
-        }
-
-    }
-
-
-
-    _startStats(){
-
-        if(this.statsInterval) clearInterval(this.statsInterval);
-
-        this.statsInterval = setInterval(async ()=>{
-
-            if(!this.pc || this.pc.connectionState !== 'connected') return;
-
-            try{
-
-                const stats = await this.pc.getStats();
-
-                let fps = 0, bitrate = 0, rtt = 0, loss = 0;
-
-                stats.forEach(r=>{
-
-                    if(r.type === 'inbound-rtp' && r.kind === 'video'){
-
-                        if(r.framesPerSecond) fps = r.framesPerSecond;
-
-                        if(r.bytesReceived && r.timestamp){
-
-                            if(!window._lastBytes) window._lastBytes = r.bytesReceived;
-
-                            const dt = (r.timestamp - (window._lastTimestamp || r.timestamp)) / 1000;
-
-                            if(dt > 0) bitrate = ((r.bytesReceived - window._lastBytes) * 8 / dt / 1024 / 1024).toFixed(2);
-
-                            window._lastBytes = r.bytesReceived; window._lastTimestamp = r.timestamp;
-
-                        }
-
-                        if(r.packetsLost !== undefined && r.packetsReceived !== undefined){
-
-                            const total = r.packetsLost + r.packetsReceived;
-
-                            loss = total > 0 ? (r.packetsLost / total * 100).toFixed(2) : 0;
-
-                        }
-
-                    }
-
-                    if(r.type === 'candidate-pair' && r.currentRoundTripTime) rtt = (r.currentRoundTripTime * 1000).toFixed(0);
-
+            _bindUI() {
+                document.querySelectorAll('.protocol-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.protocol-btn').forEach(b => {
+                            b.classList.remove('active');
+                            b.setAttribute('aria-pressed', 'false');
+                        });
+                        btn.classList.add('active');
+                        btn.setAttribute('aria-pressed', 'true');
+                        this.currentProto = btn.dataset.proto;
+                    });
                 });
 
-                this.updateStatus(`延迟: ${rtt}ms | 码率: ${bitrate}Mbps | FPS: ${fps} | 丢包率: ${loss}%`);
+                document.getElementById('connectBtn').addEventListener('click', () => this.connectRoom());
+                document.getElementById('refreshBtn').addEventListener('click', () => this.refresh());
+                document.getElementById('disconnectBtn').addEventListener('click', () => this.disconnect());
+                if (this.fullscreenBtn) this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
 
-            }catch(e){}
+                this.roomInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.connectRoom(); });
 
-        }, 1000);
-
-    }
-
-
-
-    _startHLSStats(){
-
-        if(this.statsInterval) clearInterval(this.statsInterval);
-
-        this.statsInterval = setInterval(() => {
-
-            if(this.video.readyState > 0){
-
-                const buffered = this.video.buffered;
-
-                let bufferedTime = 0;
-
-                if(buffered.length > 0){
-
-                    bufferedTime = buffered.end(buffered.length - 1) - this.video.currentTime;
-
-                }
-
-                this.updateStatus(`HLS播放中 · 缓冲: ${bufferedTime.toFixed(1)}秒`);
-
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.tagName === 'INPUT') return;
+                    switch (e.key) {
+                        case 'f': case 'F':
+                            if (!this.isFullscreen && (this.video.srcObject || this.video.src)) this.toggleFullscreen();
+                            break;
+                        case 'Escape':
+                            if (this.isFullscreen) this.toggleFullscreen();
+                            break;
+                        case 's': case 'S':
+                            this.refresh();
+                            break;
+                        case 'd': case 'D':
+                            this.disconnect();
+                            break;
+                        case '1':
+                            if (this.presetChannels[0]) this.connectStream(this.presetChannels[0].url, 'whep');
+                            break;
+                        case '2':
+                            if (this.presetChannels[1]) this.connectStream(this.presetChannels[1].url, 'whep');
+                            break;
+                        case '3':
+                            if (this.presetChannels[2]) this.connectStream(this.presetChannels[2].url, 'whep');
+                            break;
+                    }
+                });
             }
 
-        }, 2000);
+            _loadPresetChannels() {
+                this.presetContainer.innerHTML = '';
+                this.presetChannels.forEach((ch, index) => {
+                    const btn = this._createChannelButton(ch.name, ch.img, ch.url, false, 'whep');
+                    btn.setAttribute('data-hotkey', index + 1);
+                    this.presetContainer.appendChild(btn);
+                });
+            }
 
-    }
+            _createChannelButton(name, img, url, manual = false, proto = 'whep') {
+                const btn = document.createElement('button');
+                btn.className = 'button_play' + (manual ? ' manual' : '');
+                btn.type = 'button';
+                btn.addEventListener('click', () => this.connectStream(url, proto));
+                btn.addEventListener('mousedown', () => btn.classList.add('pressed'));
+                document.addEventListener('mouseup', () => btn.classList.remove('pressed'));
+                btn.addEventListener('mouseleave', () => btn.classList.remove('pressed'));
 
+                if (img) {
+                    const imgEl = document.createElement('img');
+                    imgEl.className = 'head_img';
+                    imgEl.src = img;
+                    imgEl.alt = '';
+                    btn.appendChild(imgEl);
+                }
 
+                const txt = document.createElement('div');
+                txt.className = 'channel_text';
+                txt.innerText = name;
+                btn.appendChild(txt);
 
-    toggleFullscreen(){
+                if (manual) {
+                    const urlDiv = document.createElement('div');
+                    urlDiv.className = 'url_text';
+                    urlDiv.innerText = url;
 
-        if(!this.isFullscreen){
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'delete_btn';
+                    delBtn.type = 'button';
+                    delBtn.title = '删除记录';
+                    delBtn.innerText = '×';
+                    delBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (btn.parentElement) btn.parentElement.removeChild(btn);
+                        if (urlDiv.parentElement) urlDiv.parentElement.removeChild(urlDiv);
+                    });
 
-            const overlay = document.createElement('div');
+                    btn.appendChild(delBtn);
+                    this.historyContainer.appendChild(btn);
+                    this.historyContainer.appendChild(urlDiv);
+                }
 
-            overlay.className = 'fullscreen-mode';
+                return btn;
+            }
 
-            overlay.id = 'fullscreenContainer';
+            generateUrl(room) {
+                if (!room) return null;
+                switch (this.currentProto) {
+                    case 'whep':
+                        return `http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=${room}`;
+                    case 'hls':
+                        return `http://localhost:8080/live/${room}.m3u8`;
+                    default:
+                        return null;
+                }
+            }
 
+            connectRoom() {
+                const room = this.roomInput.value.trim();
+                if (!room) return;
+                const url = this.generateUrl(room);
+                if (!url) return;
+                this.connectStream(url, this.currentProto);
+                this.addManualChannel(room, url, this.currentProto);
+            }
 
+            addManualChannel(name, url, proto) {
+                this._createChannelButton(name, null, url, true, proto);
+            }
 
-            const controls = document.createElement('div');
+            refresh() {
+                if (this.currentUrl) this.connectStream(this.currentUrl, this.currentProto);
+            }
 
-            controls.className = 'fullscreen-controls';
+            disconnect() {
+                if (this.pc) {
+                    try { this.pc.close(); } catch (e) {}
+                    this.pc = null;
+                }
+                if (this.statsInterval) { clearInterval(this.statsInterval); this.statsInterval = null; }
+                try {
+                    this.video.srcObject = null;
+                    this.video.src = '';
+                    this.video.load();
+                } catch (e) {}
+                this.updateStatus('已断开连接');
+                window._lastBytes = 0;
+                if (this.isFullscreen) this.toggleFullscreen();
+            }
 
-            controls.innerHTML = `<button id="fsDisconnectBtn" type="button">断开</button><button id="fsExitBtn" type="button">退出全屏</button>`;
+            async connectStream(url, proto) {
+                this.disconnect();
+                this.currentUrl = url;
+                this.currentProto = proto;
+                this.updateStatus('正在连接...');
 
+                // HLS playback
+                if (proto === 'hls') {
+                    try {
+                        this.video.src = url;
+                        this.video.load();
+                        await this.video.play();
+                        this.updateStatus('HLS连接成功 · 正在播放');
+                        this._startHLSStats();
+                    } catch (e) {
+                        console.error('HLS连接失败', e);
+                        this.updateStatus(`HLS连接失败: ${e.message}`);
+                    }
+                    return;
+                }
 
+                // WebRTC playback
+                try {
+                    this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+                    this.pc.addTransceiver('video', { direction: 'recvonly' });
+                    this.pc.addTransceiver('audio', { direction: 'recvonly' });
 
-            const videoClone = this.video.cloneNode(true);
+                    this.pc.ontrack = (e) => {
+                        try { this.video.srcObject = e.streams[0]; } catch (err) {}
+                        this.updateStatus('连接成功 · 正在接收视频');
+                    };
 
-            videoClone.controls = true;
+                    this.pc.oniceconnectionstatechange = () => {
+                        if (this.pc) {
+                            const st = this.pc.iceConnectionState;
+                            if (st === 'failed' || st === 'disconnected') this.updateStatus(`ICE: ${st}`);
+                        }
+                    };
 
-            try{ 
+                    const offer = await this.pc.createOffer();
+                    await this.pc.setLocalDescription(offer);
 
-                if(this.video.srcObject) videoClone.srcObject = this.video.srcObject;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/sdp' },
+                        body: offer.sdp
+                    });
 
-                if(this.video.src) videoClone.src = this.video.src;
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const answer = await response.text();
+                    await this.pc.setRemoteDescription({ type: 'answer', sdp: answer });
 
-            }catch(e){}
+                    this._startStats();
+                } catch (e) {
+                    console.error('连接失败', e);
+                    this.updateStatus(`连接失败: ${e.message}`);
+                    this.disconnect();
+                }
+            }
 
+            _startStats() {
+                if (this.statsInterval) clearInterval(this.statsInterval);
+                this.statsInterval = setInterval(async () => {
+                    if (!this.pc || this.pc.connectionState !== 'connected') return;
+                    try {
+                        const stats = await this.pc.getStats();
+                        let fps = 0, bitrate = 0, rtt = 0, loss = 0;
+                        stats.forEach(r => {
+                            if (r.type === 'inbound-rtp' && r.kind === 'video') {
+                                if (r.framesPerSecond) fps = r.framesPerSecond;
+                                if (r.bytesReceived && r.timestamp) {
+                                    if (!window._lastBytes) window._lastBytes = r.bytesReceived;
+                                    const dt = (r.timestamp - (window._lastTimestamp || r.timestamp)) / 1000;
+                                    if (dt > 0) bitrate = ((r.bytesReceived - window._lastBytes) * 8 / dt / 1024 / 1024).toFixed(2);
+                                    window._lastBytes = r.bytesReceived;
+                                    window._lastTimestamp = r.timestamp;
+                                }
+                                if (r.packetsLost !== undefined && r.packetsReceived !== undefined) {
+                                    const total = r.packetsLost + r.packetsReceived;
+                                    loss = total > 0 ? (r.packetsLost / total * 100).toFixed(2) : 0;
+                                }
+                            }
+                            if (r.type === 'candidate-pair' && r.currentRoundTripTime) rtt = (r.currentRoundTripTime * 1000).toFixed(0);
+                        });
+                        this.updateStatus(`延迟: ${rtt}ms | 码率: ${bitrate}Mbps | FPS: ${fps} | 丢包率: ${loss}%`);
+                    } catch (e) {}
+                }, 1000);
+            }
 
+            _startHLSStats() {
+                if (this.statsInterval) clearInterval(this.statsInterval);
+                this.statsInterval = setInterval(() => {
+                    if (this.video.readyState > 0) {
+                        const buffered = this.video.buffered;
+                        let bufferedTime = 0;
+                        if (buffered.length > 0) {
+                            bufferedTime = buffered.end(buffered.length - 1) - this.video.currentTime;
+                        }
+                        this.updateStatus(`HLS播放中 · 缓冲: ${bufferedTime.toFixed(1)}秒`);
+                    }
+                }, 2000);
+            }
 
-            overlay.appendChild(videoClone);
+            toggleFullscreen() {
+                if (!this.isFullscreen) {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'fullscreen-mode';
+                    overlay.id = 'fullscreenContainer';
 
-            overlay.appendChild(controls);
+                    const controls = document.createElement('div');
+                    controls.className = 'fullscreen-controls';
+                    controls.innerHTML = `<button id="fsDisconnectBtn" type="button">断开</button><button id="fsExitBtn" type="button">退出全屏</button>`;
 
-            document.body.appendChild(overlay);
+                    const videoClone = this.video.cloneNode(true);
+                    videoClone.controls = true;
+                    try {
+                        if (this.video.srcObject) videoClone.srcObject = this.video.srcObject;
+                        if (this.video.src) videoClone.src = this.video.src;
+                    } catch (e) {}
 
+                    overlay.appendChild(videoClone);
+                    overlay.appendChild(controls);
+                    document.body.appendChild(overlay);
 
+                    document.getElementById('fsDisconnectBtn').addEventListener('click', () => this.disconnect());
+                    document.getElementById('fsExitBtn').addEventListener('click', () => this.toggleFullscreen());
 
-            document.getElementById('fsDisconnectBtn').addEventListener('click', ()=> this.disconnect());
+                    this.video.style.display = 'none';
+                    if (this.fullscreenBtn) this.fullscreenBtn.textContent = '退出全屏';
+                    this.isFullscreen = true;
 
-            document.getElementById('fsExitBtn').addEventListener('click', ()=> this.toggleFullscreen());
+                    this.fullscreenTimeout = setTimeout(() => controls.classList.add('hidden'), 1000);
+                    overlay.addEventListener('mousemove', () => {
+                        controls.classList.remove('hidden');
+                        clearTimeout(this.fullscreenTimeout);
+                        this.fullscreenTimeout = setTimeout(() => controls.classList.add('hidden'), 1200);
+                    });
+                    controls.addEventListener('mouseleave', () => {
+                        clearTimeout(this.fullscreenTimeout);
+                        this.fullscreenTimeout = setTimeout(() => controls.classList.add('hidden'), 1200);
+                    });
+                } else {
+                    const overlay = document.getElementById('fullscreenContainer');
+                    if (overlay) document.body.removeChild(overlay);
+                    if (this.fullscreenTimeout) { clearTimeout(this.fullscreenTimeout); this.fullscreenTimeout = null; }
+                    this.video.style.display = 'block';
+                    if (this.fullscreenBtn) this.fullscreenBtn.textContent = '网页全屏';
+                    this.isFullscreen = false;
+                }
+            }
 
-
-
-            this.video.style.display = 'none';
-
-            if(this.fullscreenBtn) this.fullscreenBtn.textContent = '退出全屏';
-
-            this.isFullscreen = true;
-
-
-
-            this.fullscreenTimeout = setTimeout(()=> controls.classList.add('hidden'), 1000);
-
-            overlay.addEventListener('mousemove', ()=>{
-
-                controls.classList.remove('hidden');
-
-                clearTimeout(this.fullscreenTimeout);
-
-                this.fullscreenTimeout = setTimeout(()=> controls.classList.add('hidden'), 1200);
-
-            });
-
-            controls.addEventListener('mouseleave', ()=> {
-
-                clearTimeout(this.fullscreenTimeout);
-
-                this.fullscreenTimeout = setTimeout(()=> controls.classList.add('hidden'), 1200);
-
-            });
-
-        }else{
-
-            const overlay = document.getElementById('fullscreenContainer');
-
-            if(overlay) document.body.removeChild(overlay);
-
-            if(this.fullscreenTimeout) { clearTimeout(this.fullscreenTimeout); this.fullscreenTimeout = null; }
-
-            this.video.style.display = 'block';
-
-            if(this.fullscreenBtn) this.fullscreenBtn.textContent = '网页全屏';
-
-            this.isFullscreen = false;
-
+            updateStatus(text) { if (this.statusEl) this.statusEl.innerText = text; }
         }
 
-    }
-
-
-
-    updateStatus(text){ if(this.statusEl) this.statusEl.innerText = text; }
-
-}
-
-
-
-window.player = new JiBaJiBaPlayer();
-
-</script>
-
+        window.player = new JiBaJiBaPlayer();
+    </script>
 </body>
-
 </html>
