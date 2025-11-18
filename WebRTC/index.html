@@ -78,8 +78,11 @@ body{
 
 <div class="header">
   <h1>WebRTC 网页播放器</h1>
+  <br>
   <p>本页面基于 SRS（Simple Realtime Server）WebRTC 实现，可在浏览器环境下提供低延迟、高兼容性的实时播放体验。</p>
   <p>得益于 WebRTC 已成为正式 RFC 标准，主流现代浏览器均可在无需插件的前提下完成媒体流的实时传输与观看。</p>
+  <p>常见适用场景为内部低延迟直播、远程监控、视频会议与开发/测试环境。</p>
+  <p>在网络条件受限时，可启用码率自适应或降级策略以保持基本连通性和可用性，或者尝试更换编码器，推荐使用 Opus。
   <div class="time" id="timeDisplay"></div>
 </div>
 
@@ -90,7 +93,7 @@ body{
 
 <button class="button_card" onclick="location.href='https://10.126.126.15/WebRTC/jiBaJiBa'">
   jiBaJiBa播放器
-  <p>AI协助生成的分支版本播放器，至今没人能理解AI在写什么</p>
+  <p>AI协助生成的分支版本播放器，适用于新功能测试和尝鲜</p>
 </button>
 
 <script>
