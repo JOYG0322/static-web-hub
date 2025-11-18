@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>WebRTC 网页播放器</title>
-<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="icon" type="image/png" href="../assets/icon.png">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 :root{
@@ -78,17 +78,17 @@ body{
 
 <div class="header">
   <h1>WebRTC 网页播放器</h1>
-  <p>使用 SRS（Simple Realtime Server）实现的 WebRTC 协议网页播放器，支持低延迟观看和轻量化使用。</p>
-  <p>由于WebRTC早已成为RFC正式标准，因此各种只要是能使用浏览器的设备都可以实现屏幕共享以及观看，浏览器自身的安全限制不算。</p>
+  <p>本页面基于 SRS（Simple Realtime Server）WebRTC 实现，可在浏览器环境下提供低延迟、高兼容性的实时播放体验。</p>
+  <p>得益于 WebRTC 已成为正式 RFC 标准，主流现代浏览器均可在无需插件的前提下完成媒体流的实时传输与观看。</p>
   <div class="time" id="timeDisplay"></div>
 </div>
 
-<button class="button_card" onclick="window.open('https://10.126.126.15/deertube','_blank')">
+<button class="button_card" onclick="location.href='https://10.126.126.15/deertube'">
   deertube播放器
   <p>CMHH编写的最初更新版本</p>
 </button>
 
-<button class="button_card" onclick="window.open('https://10.126.126.15/jiBaJiBa','_blank')">
+<button class="button_card" onclick="location.href='https://10.126.126.15/jiBaJiBa'">
   jiBaJiBa播放器
   <p>AI协助生成的分支版本播放器，至今没人能理解AI在写什么</p>
 </button>
