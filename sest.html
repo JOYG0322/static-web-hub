@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>服务跳转中心</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{
+  --bg-dark:#181818;
+  --bg-card:#262626;
+  --bg-hover:#333333;
+  --text-main:#e6e6e6;
+  --text-sub:#bfbfbf;
+  --accent:#00a1d6;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--bg-dark);
+  font-family:"Segoe UI","Microsoft YaHei",sans-serif;
+  color:var(--text-main);
+  padding:30px 20px 60px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+/* Header */
+.header{
+  text-align:center;
+  max-width:1000px;
+  margin-bottom:40px;
+  padding:0 20px;
+}
+.header h1{
+  font-size:2.2rem;
+  font-weight:600;
+  margin-bottom:12px;
+}
+.header p{
+  line-height:1.75;
+  font-size:1.05rem;
+  color:var(--text-sub);
+}
+.time{
+  margin-top:8px;
+  font-size:0.95rem;
+  color:var(--accent);
+}
+
+/* Divider */
+.divider{
+  width:100%;
+  max-width:1100px;
+  height:1px;
+  background:#3c3c3c;
+  margin:35px auto 25px;
+  border-radius:2px;
+}
+
+/* Section title */
+.section{
+  width:100%;
+  max-width:1100px;
+  margin:40px auto 20px;
+}
+.section-title{
+  color:var(--accent);
+  font-size:1.35rem;
+  margin-bottom:14px;
+  letter-spacing:0.3px;
+  font-weight:600;
+  padding-left:2px;
+}
+
+/* Two-column grid (desktop) */
+.section-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:18px 20px;
+}
+
+/* Card */
+.card{
+  background:var(--bg-card);
+  padding:18px 22px;
+  border-radius:14px;
+  cursor:pointer;
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  transition:0.25s;
+  box-shadow:0 0 10px rgba(0,0,0,.35);
+}
+
+.card:hover{
+  background:var(--bg-hover);
+  transform:translateY(-3px);
+  box-shadow:0 10px 26px rgba(0,0,0,.55);
+}
+
+/* Icon */
+.card-icon img{
+  width:34px;
+  height:34px;
+  opacity:0.9;
+}
+
+/* Text */
+.card-content h3{
+  margin:0;
+  font-size:1.15rem;
+  font-weight:500;
+}
+.card-content p{
+  margin-top:4px;
+  color:var(--text-sub);
+  font-size:0.9rem;
+  line-height:1.55;
+}
+
+/* Mobile */
+@media(max-width:750px){
+  .section-grid{
+    grid-template-columns:1fr;
+  }
+  .card{
+    padding:16px 18px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>服务跳转中心</h1>
+
+  <p>本页面作为内部服务与工具的统一入口，采用分区与卡片式结构，确保在内容扩展后依然保持高可读性与一致性。</p>
+  <p>你可以在下方按分组添加各种服务、页面、播放器、控制台或管理面板。</p>
+
+  <div class="time" id="timeDisplay"></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Section 1 -->
+<div class="section">
+  <h2 class="section-title">分区示例 1</h2>
+
+  <div class="section-grid">
+    <!-- 1 -->
+    <div class="card" onclick="window.open('#','_blank')">
+      <div class="card-icon"><img src="assets/icon.png"></div>
+      <div class="card-content">
+        <h3>服务名称</h3>
+        <p>描述信息，可填写功能说明。</p>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="card" onclick="window.open('#','_blank')">
+      <div class="card-icon"><img src="assets/icon.png"></div>
+      <div class="card-content">
+        <h3>服务名称</h3>
+        <p>描述信息，可填写功能说明。</p>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="card" onclick="window.open('#','_blank')">
+      <div class="card-icon"><img src="assets/icon.png"></div>
+      <div class="card-content">
+        <h3>服务名称</h3>
+        <p>描述信息，可填写功能说明。</p>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="card" onclick="window.open('#','_blank')">
+      <div class="card-icon"><img src="assets/icon.png"></div>
+      <div class="card-content">
+        <h3>服务名称</h3>
+        <p>描述信息，可填写功能说明。</p>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="card" onclick="window.open('#','_blank')">
+      <div class="card-icon"><img src="assets/icon.png"></div>
+      <div class="card-content">
+        <h3>服务名称</h3>
+        <p>描述信息，可填写功能说明。</p>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="card" onclick="window.open('#','_blank')">
+      <div class="card-icon"><img src="assets/icon.png"></div>
+      <div class="card-content">
+        <h3>服务名称</h3>
+        <p>描述信息，可填写功能说明。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 动态时间
+function updateTime(){
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('timeDisplay').textContent = `当前时间：${h}:${m}:${s}`;
+}
+setInterval(updateTime,1000);
+updateTime();
+</script>
+
+</body>
+</html>
