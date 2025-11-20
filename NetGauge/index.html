@@ -524,6 +524,32 @@ async function measureTTFB(url){
   }
 }
 
+/* 新增：统计辅助函数：median / percentile / getStats */
+function computeMedian(arr){
+  if (!arr || !arr.length) return null;
+  const a = Array.from(arr).sort((x,y)=>x-y);
+  const mid = Math.floor(a.length/2);
+  return a.length % 2 ? a[mid] : Math.round((a[mid-1]+a[mid])/2);
+}
+function percentile(arr, p){
+  if (!arr || !arr.length) return null;
+  const a = Array.from(arr).sort((x,y)=>x-y);
+  const idx = Math.max(0, Math.min(a.length-1, Math.floor((p/100) * a.length)));
+  return a[idx];
+}
+function getStats(results){
+  // results: [{url, ok, time, err}, ...]
+  const valid = results.filter(r=>r.ok).map(r=>r.time);
+  const timeouts = results.filter(r=>r.err === 'timeout').length;
+  const failures = results.filter(r=>!r.ok && r.err && r.err !== 'timeout').length;
+  const count = results.length;
+  const success = valid.length;
+  const median = computeMedian(valid);
+  const mean = valid.length ? Math.round(valid.reduce((a,b)=>a+b,0)/valid.length) : null;
+  const p90 = percentile(valid, 90);
+  return { count, success, timeouts, failures, median, mean, p90, samples: valid };
+}
+
 /* Simple scoring rules (示例，按需调整) */
 function computeScore(metrics){
   // metrics: {inRtt,outRtt,jitter,loss,download,upload,dnsOK}
@@ -586,18 +612,31 @@ async function runFullTest(){
   // 墙内请求通常更快，设置较短的单次超时；墙外可适当放宽
   const inRes = await measureRttBatch(CONFIG.inEndpoints, 4, 90, 3000);
   const outRes = await measureRttBatch(CONFIG.outEndpoints, 3, 120, 7000);
-  // aggregate mean per group
-  const inSamples = inRes.filter(r=>r.ok).map(r=>r.time);
-  const outSamples = outRes.filter(r=>r.ok).map(r=>r.time);
-  const inAvg = inSamples.length ? Math.round(inSamples.reduce((a,b)=>a+b,0)/inSamples.length) : null;
-  const outAvg = outSamples.length ? Math.round(outSamples.reduce((a,b)=>a+b,0)/outSamples.length) : null;
-  setText('latency-in', inAvg ? (inAvg + ' ms') : '— ms');
-  setText('latency-out', outAvg ? (outAvg + ' ms') : '— ms');
 
-  // jitter from combined RTT sequence
-  const combined = inSamples.concat(outSamples);
+  // 聚合并采用更稳健的统计（中位数/90p），同时记录超时数量以便日志提示
+  const inStats = getStats(inRes);
+  const outStats = getStats(outRes);
+
+  // 使用 median 作为显示的代表值（比 mean 对离群值更稳健）
+  const inRep = inStats.median || inStats.mean || null;
+  const outRep = outStats.median || outStats.mean || null;
+
+  setText('latency-in', inRep ? (inRep + ' ms') : '— ms');
+  setText('latency-out', outRep ? (outRep + ' ms') : '— ms');
+
+  // 记录并输出更多诊断信息到日志（超时/样本数/90p）
+  log(`墙内 RTT 样本: total=${inStats.count}, success=${inStats.success}, timeouts=${inStats.timeouts}, median=${inStats.median||'—'}ms, p90=${inStats.p90||'—'}ms`);
+  log(`墙外 RTT 样本: total=${outStats.count}, success=${outStats.success}, timeouts=${outStats.timeouts}, median=${outStats.median||'—'}ms, p90=${outStats.p90||'—'}ms`);
+
+  // jitter from combined RTT sequence (仅使用成功样本)
+  const combined = inStats.samples.concat(outStats.samples);
   const jitter = computeJitter(combined);
   setText('jitter', jitter ? (jitter + ' ms') : '— ms');
+
+  // 可选：当墙内中位数明显高于墙外（例如 >1.5x 或比 out 多 100ms）时额外记录提示
+  if (inStats.median && outStats.median && (inStats.median > outStats.median * 1.5 || inStats.median - outStats.median > 100)) {
+    log('注意：检测到墙内延迟高于墙外，可能与 CDN 路径、回源或本地网络策略相关。');
+  }
 
   // 2) websocket packet loss (if configured)
   let lossResult = { ok:false, reason:'wsNotConfigured' };
