@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+<meta charset="UTF-8">
+<title>网络质量测试工具</title>
+<style>
+    /* ============================
+       全站深色科技 UI
+       ============================ */
+    body {
+        margin: 0;
+        background: #121212;
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #e5e5e5;
+    }
+    .container {
+        width: 1200px;
+        margin: 40px auto;
+        display: flex;
+        gap: 20px;
+    }
+    .left, .right {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .card {
+        background: #1c1c1c;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px #0008;
+        transition: 0.25s;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px #000a;
+    }
+    h2 {
+        margin-top: 0;
+        border-left: 4px solid #28c2c9;
+        padding-left: 10px;
+        font-weight: 500;
+    }
+    button {
+        padding: 10px 20px;
+        background: #28c2c9;
+        color: #000;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s;
+        margin-top: 10px;
+    }
+    button:hover {
+        background: #2be0e8;
+        transform: translateY(-2px);
+    }
+    .output {
+        margin-top: 10px;
+        font-size: 15px;
+        color: #b0b0b0;
+        white-space: pre-line;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ============================
+         左边：测试区
+         ============================ -->
+    <div class="left">
+
+        <div class="card">
+            <h2>WebSocket 延迟 / 丢包测试</h2>
+            <button onclick="testWebSocket()">开始测试</button>
+            <div class="output" id="wsResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>下载带宽测试</h2>
+            <button onclick="testDownload()">测试下载速度</button>
+            <div class="output" id="downloadResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>上传带宽测试</h2>
+            <button onclick="testUpload()">测试上传速度</button>
+            <div class="output" id="uploadResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>墙内 / 墙外延迟</h2>
+            <button onclick="testDomestic()">测试墙内延迟</button>
+            <button onclick="testOversea()">测试墙外延迟</button>
+            <div class="output" id="wallResult"></div>
+        </div>
+
+    </div>
+
+
+    <!-- ============================
+         右边：更多功能
+         ============================ -->
+    <div class="right">
+
+        <div class="card">
+            <h2>IPv4 / IPv6 检测</h2>
+            <button onclick="testIP()">检测 IP</button>
+            <div class="output" id="ipResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>DNS Lookup / TTFB</h2>
+            <button onclick="testDNS()">测试</button>
+            <div class="output" id="dnsResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>实时日志</h2>
+            <div class="output" id="logBox">等待中…</div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+/* 后端地址 ======================= */
+const backend = "http://localhost:8080";
+
+/* 日志输出 ======================= */
+function log(msg) {
+    document.getElementById("logBox").textContent += "\n" + msg;
+}
+
+/* ===============================
+   WebSocket 丢包 + RTT
+   =============================== */
+async function testWebSocket() {
+    const resultBox = document.getElementById("wsResult");
+    resultBox.textContent = "测试中…";
+
+    const ws = new WebSocket(backend.replace("http", "ws") + "/ws");
+
+    let count = 30;
+    let sent = 0;
+    let received = 0;
+    let rtts = [];
+
+    ws.onopen = () => {
+        let i = 0;
+        let sendOne = () => {
+            if (i >= count) {
+                let lost = sent - received;
+                let lossRate = ((lost / sent) * 100).toFixed(1);
+                let avgRTT = (rtts.reduce((a, b) => a + b, 0) / rtts.length).toFixed(2);
+
+                resultBox.textContent = `发送：${sent}\n收到：${received}\n丢包率：${lossRate}%\n平均延迟：${avgRTT} ms`;
+                ws.close();
+                return;
+            }
+
+            let t0 = performance.now();
+            ws.send(t0.toString());
+            sent++;
+            i++;
+            setTimeout(sendOne, 120);
+        };
+        sendOne();
+    };
+
+    ws.onmessage = (e) => {
+        received++;
+        let t0 = parseFloat(e.data);
+        let rtt = performance.now() - t0;
+        rtts.push(rtt);
+    };
+}
+
+/* ===============================
+   下载带宽测试
+   =============================== */
+async function testDownload() {
+    const box = document.getElementById("downloadResult");
+    box.textContent = "测试中…";
+
+    const start = performance.now();
+    const res = await fetch(backend + "/download.bin");
+    const blob = await res.blob();
+    const end = performance.now();
+
+    const sizeMB = blob.size / (1024 * 1024);
+    const speed = (sizeMB / ((end - start) / 1000)).toFixed(2);
+
+    box.textContent = `下载文件：${sizeMB.toFixed(1)} MB\n下载速度：${speed} MB/s`;
+}
+
+/* ===============================
+   上传带宽测试
+   =============================== */
+async function testUpload() {
+    const box = document.getElementById("uploadResult");
+    box.textContent = "测试中…";
+
+    const size = 10 * 1024 * 1024; // 10MB
+    const buffer = new Uint8Array(size);
+
+    const start = performance.now();
+    const res = await fetch(backend + "/upload", {
+        method: "POST",
+        body: buffer
+    });
+    const end = performance.now();
+
+    const json = await res.json();
+    const speed = ((json.received / (1024 * 1024)) / ((end - start) / 1000)).toFixed(2);
+
+    box.textContent = `上传：${(size/1024/1024).toFixed(1)} MB\n上传速度：${speed} MB/s`;
+}
+
+/* ===============================
+   墙内延迟
+   =============================== */
+async function testDomestic() {
+    const box = document.getElementById("wallResult");
+    box.textContent = "测试中…";
+
+    const target = "https://www.qq.com/";
+
+    const t0 = performance.now();
+    await fetch(target, { mode: "no-cors" }).catch(()=>{});
+    const t1 = performance.now();
+
+    box.textContent = `墙内 RTT ≈ ${(t1 - t0).toFixed(2)} ms`;
+}
+
+/* ===============================
+   墙外延迟
+   =============================== */
+async function testOversea() {
+    const box = document.getElementById("wallResult");
+    box.textContent = "测试中…";
+
+    const target = "https://www.google.com/generate_204";
+
+    const t0 = performance.now();
+    await fetch(target).catch(()=>{});
+    const t1 = performance.now();
+
+    box.textContent = `墙外 RTT ≈ ${(t1 - t0).toFixed(2)} ms`;
+}
+
+/* ===============================
+   IP 检测
+   =============================== */
+async function testIP() {
+    const box = document.getElementById("ipResult");
+    box.textContent = "测试中…";
+
+    const res = await fetch(backend + "/ip");
+    const json = await res.json();
+
+    box.textContent = `IPv4: ${json.ipv4.join(", ")}\nIPv6: ${json.ipv6.join(", ")}`;
+}
+
+/* ===============================
+   DNS Lookup / TTFB
+   =============================== */
+async function testDNS() {
+    const box = document.getElementById("dnsResult");
+    box.textContent = "测试中…";
+
+    const url = "https://www.cloudflare.com/";
+
+    const t0 = performance.now();
+    const res = await fetch(url, { mode: "no-cors" });
+    const tTFB = performance.now() - t0;
+
+    box.textContent = `TTFB（近似）：${tTFB.toFixed(2)} ms\n无法直接测 DNS，浏览器限制`;
+}
+
+</script>
+</body>
+</html>
