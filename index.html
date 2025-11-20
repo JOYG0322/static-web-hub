@@ -138,11 +138,10 @@ body{
 <!-- Header -->
 <div class="header">
   <h1>服务跳转中心</h1>
-
+  <div class="time" id="timeDisplay"></div>
+  <br>
   <p>本页面作为内部服务与工具的统一入口，采用分区与卡片式结构，确保在内容扩展后依然保持高可读性与一致性。</p>
   <p>你可以在下方按分组添加各种服务、页面、播放器、控制台或管理面板。</p>
-
-  <div class="time" id="timeDisplay"></div>
 </div>
 
 <div class="divider"></div>
@@ -205,19 +204,49 @@ body{
         <p>描述信息，可填写功能说明。</p>
       </div>
     </div>
+
+  </div> <!-- 关闭 .section-grid -->
+</div> <!-- 关闭 .section -->
+
+<!-- 新增：第三方链接（与上方卡片布局相同） -->
+<div class="section">
+  <h2 class="section-title">第三方链接</h2>
+
+  <div class="section-grid">
+    <div class="card" onclick="window.open('http://10.126.126.15:5244/','_blank')">
+      <div class="card-icon"><img src="assets/icon.png"></div>
+      <div class="card-content">
+        <h3>openlist</h3>
+        <p>文件转存，储存，离线下载网页。</p>
+      </div>
+    </div>
+
+    <div class="card" onclick="window.open('#','_blank')">
+      <div class="card-icon"><img src="assets/icon.png"></div>
+      <div class="card-content">
+        <h3>服务名称</h3>
+        <p>描述信息，可填写功能说明。</p>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- 动态时间脚本 -->
 <script>
-// 动态时间
+/* 替换原有的 updateTime 实现，显示 年-月-日 时:分:秒 星期X */
 function updateTime(){
     const now = new Date();
-    const h = String(now.getHours()).padStart(2,'0');
-    const m = String(now.getMinutes()).padStart(2,'0');
-    const s = String(now.getSeconds()).padStart(2,'0');
-    document.getElementById('timeDisplay').textContent = `当前时间：${h}:${m}:${s}`;
+    const Y = now.getFullYear();
+    const M = String(now.getMonth() + 1).padStart(2, '0');
+    const D = String(now.getDate()).padStart(2, '0');
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+    const wd = weekdays[now.getDay()];
+    document.getElementById('timeDisplay').textContent = `当前时间：${Y}-${M}-${D} ${h}:${m}:${s} ${wd}`;
 }
-setInterval(updateTime,1000);
+setInterval(updateTime, 1000);
 updateTime();
 </script>
 
