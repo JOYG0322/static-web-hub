@@ -241,10 +241,9 @@ function updateTime(){
     const D = String(now.getDate()).padStart(2, '0');
     const h = String(now.getHours()).padStart(2, '0');
     const m = String(now.getMinutes()).padStart(2, '0');
-    const s = String(now.getSeconds()).padStart(2, '0');
     const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
     const wd = weekdays[now.getDay()];
-    document.getElementById('timeDisplay').textContent = `当前时间：${Y}-${M}-${D} ${h}:${m}:${s} ${wd}`;
+    document.getElementById('timeDisplay').textContent = `当前时间: ${Y}-${M}-${D} ${h}:${m} ${wd}`;
 }
 setInterval(updateTime, 1000);
 updateTime();
