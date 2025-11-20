@@ -1,287 +1,656 @@
-<!DOCTYPE html>
-<html lang="zh-cn">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<title>网络质量测试工具</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>网络质量检测 · 工具面板</title>
 <style>
-    /* ============================
-       全站深色科技 UI
-       ============================ */
-    body {
-        margin: 0;
-        background: #121212;
-        font-family: "Segoe UI", Arial, sans-serif;
-        color: #e5e5e5;
-    }
-    .container {
-        width: 1200px;
-        margin: 40px auto;
-        display: flex;
-        gap: 20px;
-    }
-    .left, .right {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    .card {
-        background: #1c1c1c;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px #0008;
-        transition: 0.25s;
-    }
-    .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0 15px #000a;
-    }
-    h2 {
-        margin-top: 0;
-        border-left: 4px solid #28c2c9;
-        padding-left: 10px;
-        font-weight: 500;
-    }
-    button {
-        padding: 10px 20px;
-        background: #28c2c9;
-        color: #000;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: 0.2s;
-        margin-top: 10px;
-    }
-    button:hover {
-        background: #2be0e8;
-        transform: translateY(-2px);
-    }
-    .output {
-        margin-top: 10px;
-        font-size: 15px;
-        color: #b0b0b0;
-        white-space: pre-line;
-    }
+  :root{
+    --bg-1: #0f1113;
+    --bg-2: #121416;
+    --card: #151718;
+    --muted: #9aa5ad;
+    --accent: #2fb3ad; /* 蓝绿色强调色 */
+    --glass-shadow: 0 6px 18px rgba(0,0,0,0.6);
+    --radius: 10px;
+    --card-padding: 18px;
+    font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color-scheme: dark;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#d7dee3;}
+  .app {
+    max-width:1200px;
+    margin:28px auto;
+    padding:20px;
+    display:grid;
+    grid-template-columns: 1fr 340px;
+    gap:20px;
+  }
+  .panel {
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:var(--radius);
+    box-shadow:var(--glass-shadow);
+    padding:20px;
+  }
+  /* 主面板视觉更厚重 */
+  .main {
+    padding:22px;
+    min-height:640px;
+  }
+  .title {
+    display:flex;align-items:center;gap:12px;margin-bottom:18px;
+  }
+  .logo {
+    width:54px;height:54px;border-radius:10px;background:#0e0f10;border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:18px;color:var(--accent);
+  }
+  h1{font-size:18px;margin:0;color:#f3f6f8}
+  .subtitle{color:var(--muted);font-size:13px}
+  .grid {
+    display:grid;
+    grid-template-columns: repeat(3,1fr);
+    gap:12px;
+    margin-bottom:16px;
+  }
+  .metric {
+    background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
+    padding:14px;border-radius:9px;border:1px solid rgba(255,255,255,0.02);
+  }
+  .metric .value {font-size:20px;font-weight:700;color:#fff;}
+  .metric .label {color:var(--muted);font-size:12px;margin-top:6px;}
+  .big-score {
+    display:flex;align-items:center;gap:18px;margin-bottom:16px;
+  }
+  .score-card {
+    background:linear-gradient(180deg, rgba(47,179,173,0.08), rgba(47,179,173,0.04));
+    color:#e9fbfa;padding:18px;border-radius:12px;
+    display:flex;align-items:center;gap:14px;
+    min-width:200px;
+  }
+  .score-num {font-size:36px;font-weight:800;}
+  .score-text{color:#d8f3f1}
+  .controls {display:flex;gap:12px;align-items:center;margin-bottom:18px;}
+  .btn {
+    background:var(--accent);border:none;color:#071014;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer;
+    box-shadow:0 6px 18px rgba(47,179,173,0.08);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover {transform:translateY(-4px);box-shadow:0 12px 30px rgba(47,179,173,0.12)}
+  .btn.secondary {background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);font-weight:600}
+  .card {
+    margin-top:10px;background:var(--card);padding:var(--card-padding);border-radius:12px;border:1px solid rgba(255,255,255,0.02)
+  }
+  .row {display:flex;gap:10px;align-items:center;justify-content:space-between}
+  .muted {color:var(--muted);font-size:13px}
+  .log {max-height:240px;overflow:auto;padding-right:8px;font-family:monospace;background:transparent;margin-top:8px;color:#bcd2d2}
+  .side {display:flex;flex-direction:column;gap:14px;}
+  /* 微动效 */
+  .pulse {animation: pulseGlow 1.4s ease-in-out infinite}
+  @keyframes pulseGlow{0%{box-shadow:0 8px 18px rgba(47,179,173,0.08)}50%{box-shadow:0 14px 36px rgba(47,179,173,0.04)}100%{box-shadow:0 8px 18px rgba(47,179,173,0.08)}}
+  .list-row {display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.02)}
+  .hint {font-size:12px;color:var(--muted);margin-top:8px}
+  /* 渐隐的条形小图 */
+  .mini-graph {height:48px;background:linear-gradient(90deg,#0f1113, #111214);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px}
+  /* 预览图（可选） */
+  .preview {width:100%;height:160px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,0.02)}
+  footer{color:var(--muted);font-size:12px;margin-top:12px}
+  .small {font-size:12px;color:var(--muted)}
+  .status-ok{color:#8fe3d6}
+  .status-bad{color:#ff9b9b}
+  .indicator {display:inline-block;width:10px;height:10px;border-radius:50%}
+  .indicator.ok{background:#2fb3ad}
+  .indicator.bad{background:#ff7b7b}
+  /* responsive */
+  @media (max-width:1100px){.app{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
-
-<div class="container">
-
-    <!-- ============================
-         左边：测试区
-         ============================ -->
-    <div class="left">
-
-        <div class="card">
-            <h2>WebSocket 延迟 / 丢包测试</h2>
-            <button onclick="testWebSocket()">开始测试</button>
-            <div class="output" id="wsResult"></div>
-        </div>
-
-        <div class="card">
-            <h2>下载带宽测试</h2>
-            <button onclick="testDownload()">测试下载速度</button>
-            <div class="output" id="downloadResult"></div>
-        </div>
-
-        <div class="card">
-            <h2>上传带宽测试</h2>
-            <button onclick="testUpload()">测试上传速度</button>
-            <div class="output" id="uploadResult"></div>
-        </div>
-
-        <div class="card">
-            <h2>墙内 / 墙外延迟</h2>
-            <button onclick="testDomestic()">测试墙内延迟</button>
-            <button onclick="testOversea()">测试墙外延迟</button>
-            <div class="output" id="wallResult"></div>
-        </div>
-
+<div class="app">
+  <div class="panel main">
+    <div class="title">
+      <div class="logo">NT</div>
+      <div>
+        <h1>网络测试 · 工具面板</h1>
+        <div class="subtitle">深色科技风 · 功能优先 — 点击“开始测试”进行全项检测</div>
+      </div>
     </div>
 
-
-    <!-- ============================
-         右边：更多功能
-         ============================ -->
-    <div class="right">
-
-        <div class="card">
-            <h2>IPv4 / IPv6 检测</h2>
-            <button onclick="testIP()">检测 IP</button>
-            <div class="output" id="ipResult"></div>
+    <div class="big-score">
+      <div class="score-card">
+        <div>
+          <div class="score-num" id="score">—</div>
+          <div class="score-text" id="score-text">等待测试</div>
         </div>
-
-        <div class="card">
-            <h2>DNS Lookup / TTFB</h2>
-            <button onclick="testDNS()">测试</button>
-            <div class="output" id="dnsResult"></div>
-        </div>
-
-        <div class="card">
-            <h2>实时日志</h2>
-            <div class="output" id="logBox">等待中…</div>
-        </div>
-
+      </div>
+      <div style="flex:1">
+        <div class="muted">综合评分基于：墙内/墙外延迟、丢包、带宽与 DNS 一致性</div>
+      </div>
     </div>
 
+    <div class="grid" aria-hidden>
+      <div class="metric">
+        <div class="value" id="latency-in">— ms</div>
+        <div class="label">墙内延迟 (RTT)</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="latency-out">— ms</div>
+        <div class="label">墙外延迟 (RTT)</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="jitter">— ms</div>
+        <div class="label">抖动 (Jitter)</div>
+      </div>
+
+      <div class="metric">
+        <div class="value" id="loss">— %</div>
+        <div class="label">丢包率 (WebSocket)</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="download">— Mbps</div>
+        <div class="label">下载速率</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="upload">— Mbps</div>
+        <div class="label">上传速率</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="startBtn">Start Test</button>
+      <button class="btn secondary" id="clearBtn">Clear Results</button>
+      <div style="flex:1"></div>
+      <div class="small muted">状态：</div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div>
+          <div class="muted">IPv4 / IPv6</div>
+          <div style="font-weight:700;margin-top:6px"><span id="ipv4-status">—</span> · <span id="ipv6-status">—</span></div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted">国际链路</div>
+          <div style="font-weight:700;margin-top:6px" id="international-link">—</div>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="row">
+        <div style="flex-basis:60%">
+          <div class="muted">DNS 检测 (DoH 对比)</div>
+          <div id="dns-result" style="margin-top:6px">—</div>
+          <div class="hint">说明：浏览器端受限，结果为 best-effort（建议部署后端可获得更准确结论）。</div>
+        </div>
+        <div style="flex-basis:40%;text-align:right">
+          <div class="muted">TTFB / DNS lookup</div>
+          <div id="ttfb" style="font-weight:700;margin-top:6px">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="muted">测试日志</div>
+        <div class="muted small">实时输出 · 最多显示最新 200 行</div>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <footer class="small">注：若希望获得更准确的上传/丢包与 DNS 污染检测，建议部署一个可控的后端服务。需要后端模版我可以直接给出。</footer>
+  </div>
+
+  <aside class="panel side">
+    <div class="card">
+      <div class="muted">历史记录 (本地存储)</div>
+      <div id="history" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <div class="muted">快速节点预设（可在 CONFIG 中修改）</div>
+      <ul class="muted" style="margin-top:8px">
+        <li>墙内 RTT 测试：CONFIG.inEndpoints[]</li>
+        <li>墙外 RTT 测试：CONFIG.outEndpoints[]</li>
+        <li>下载测试：CONFIG.downloadUrl</li>
+        <li>上传测试：CONFIG.uploadUrl</li>
+        <li>WebSocket 丢包测试：CONFIG.wsEchoUrl</li>
+      </ul>
+      <div style="height:8px"></div>
+      <div class="muted">界面原型预览</div>
+      <!-- 可选的原型图，若你想预览：路径在 /mnt/data/A_digital_interface_of_a_network_quality_assessmen.png -->
+      <img src="/mnt/data/A_digital_interface_of_a_network_quality_assessmen.png" alt="prototype" class="preview" />
+    </div>
+
+    <div class="card small">
+      Tips:
+      <ul style="padding-left:16px;margin:8px 0;color:var(--muted)">
+        <li>浏览器受限项会在日志中明确标注。</li>
+        <li>长文件下载请使用支持 CORS 的静态文件（或通过你自己的后端中转）。</li>
+        <li>需要后端模版（Node/Go/Python）请直接告诉我我要提供。</li>
+      </ul>
+    </div>
+  </aside>
 </div>
 
 <script>
-/* 后端地址 ======================= */
-const backend = "http://localhost:8080";
+/**
+ * Network Test Frontend (single-file)
+ * - Best-effort implementation of tests that can be done purely in browser.
+ * - CONFIG controls endpoints; replace with your own node URLs where possible.
+ *
+ * Limitations:
+ * - Browser cannot do raw ICMP/traceroute; uses fetch timings and WebSocket instead.
+ * - DNS precise detection requires server-side comparison or DoH endpoints.
+ * - For accurate upload/download/bandwidth and packet-loss you should host a simple server.
+ */
 
-/* 日志输出 ======================= */
-function log(msg) {
-    document.getElementById("logBox").textContent += "\n" + msg;
+/* ========== CONFIG: 修改这些项以满足你环境 ========== */
+const CONFIG = {
+  // 墙内 RTT 测试：尽量使用支持 CORS 的国内站点或你的内网节点
+  inEndpoints: [
+    // 示例占位，请替换为你自己的内网/内地可访问服务器
+    // 'https://example-cn.com/generate_204'
+    'https://www.baidu.com/',
+  ],
+  // 墙外 RTT 测试：公共可访问的外网站点（CORS 不是必须，因为我们测时间，不读取 body）
+  outEndpoints: [
+    'https://www.google.com/generate_204',
+    'https://cloudflare.com/cdn-cgi/trace'
+  ],
+  // 下载测速 URL（必须支持大文件和 CORS；若不支持 CORS，可通过你自己的后端中转）
+  downloadUrl: 'https://speed.hetzner.de/10MB.bin', // 示例：可能支持跨域，请替换为你信任的 URL
+  // 上传测速 URL（需要支持 POST、并快速返回，建议部署你自己后端的 /upload 接口）
+  uploadUrl: null, // null 表示本地没有上传端点
+  // WebSocket 回环地址（用于精确测丢包率），需要可用的 ws/wss 回环服务器
+  wsEchoUrl: null, // 例如 'wss://your-ws-echo.example/ws'
+  // DoH 公共端（用于 DNS 对比）
+  dohUrl: 'https://cloudflare-dns.com/dns-query?name=example.com&type=A',
+  // 用来判断“墙外”的参考地址（用于国际链路 RTT 判断）
+  outReference: 'https://1.1.1.1/cdn-cgi/trace'
+};
+/* ========== END CONFIG ========== */
+
+const $ = id => document.getElementById(id);
+const logEl = $('log');
+
+function log(...args){
+  const txt = args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+  const line = document.createElement('div');
+  line.textContent = `[${(new Date()).toLocaleTimeString()}] ${txt}`;
+  logEl.prepend(line);
+  // keep to ~200 lines
+  while(logEl.children.length>220) logEl.removeChild(logEl.lastChild);
 }
 
-/* ===============================
-   WebSocket 丢包 + RTT
-   =============================== */
-async function testWebSocket() {
-    const resultBox = document.getElementById("wsResult");
-    resultBox.textContent = "测试中…";
+/* Small utility: timed fetch using performance.now */
+async function timedFetch(url, options = {}) {
+  const start = performance.now();
+  try {
+    // Use mode:'no-cors' for opaque responses if we don't need body; but opaque responses hide status.
+    // We will try default first, fall back to no-cors
+    let res;
+    try {
+      res = await fetch(url, options);
+    } catch (e) {
+      // fallback to no-cors if cross-origin blocks
+      res = await fetch(url, {...options, mode:'no-cors'});
+    }
+    const end = performance.now();
+    return { ok: true, time: end - start, res };
+  } catch (err) {
+    const end = performance.now();
+    return { ok: false, time: end - start, err };
+  }
+}
 
-    const ws = new WebSocket(backend.replace("http", "ws") + "/ws");
+/* Measure RTT by sending N quick requests and returning array of ms */
+async function measureRttBatch(urls, samples = 6, delay = 120) {
+  const results = [];
+  for (let i=0;i<samples;i++){
+    for (const url of urls){
+      const r = await timedFetch(url, {cache:'no-store'});
+      results.push({url, ok:r.ok, time: Math.round(r.time)});
+      log(`RTT ${url} => ${r.ok ? (Math.round(r.time)+'ms') : 'ERR'}`);
+      // small delay between requests
+      await new Promise(res=>setTimeout(res, delay));
+    }
+  }
+  return results;
+}
 
-    let count = 30;
-    let sent = 0;
-    let received = 0;
-    let rtts = [];
+/* compute jitter from array of RTT samples (ms) -> use avg absolute diff */
+function computeJitter(samples){
+  if (!samples.length) return 0;
+  const diffs = [];
+  for (let i=1;i<samples.length;i++){
+    diffs.push(Math.abs(samples[i]-samples[i-1]));
+  }
+  if (!diffs.length) return 0;
+  const avg = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+  return Math.round(avg);
+}
 
+/* Download speed test (best-effort) */
+async function downloadTest(url, sizeBytesLimit=5*1024*1024) {
+  if (!url) return { ok:false, reason:'no-download-url' };
+  const start = performance.now();
+  try{
+    // stream the response to measure downloaded bytes and time
+    const response = await fetch(url, {cache:'no-store', mode:'cors'});
+    if (!response.ok && response.type === 'opaque') {
+      // opaque may not be ok to read; but we still can measure time to response
+      const t = performance.now()-start;
+      // can't know bytes -> return time only
+      return { ok:true, mbps: null, time:t, note:'opaque-response' };
+    }
+    const reader = response.body && response.body.getReader();
+    if (!reader) {
+      // fallback: read as blob (may buffer whole file)
+      const blob = await response.blob();
+      const end = performance.now();
+      const bytes = blob.size;
+      const secs = (end-start)/1000;
+      const mbps = (bytes*8)/(secs*1000*1000);
+      return { ok:true, mbps: +(mbps.toFixed(2)), bytes, secs };
+    }
+    // stream and measure up to sizeBytesLimit
+    let bytes = 0;
+    const t0 = performance.now();
+    while(true){
+      const {done, value} = await reader.read();
+      if (done) break;
+      bytes += value.length;
+      // early stop if exceed limit
+      if (bytes >= sizeBytesLimit) {
+        // cancel reader to avoid full download
+        reader.cancel();
+        break;
+      }
+    }
+    const t1 = performance.now();
+    const secs = Math.max(0.001,(t1-t0)/1000);
+    const mbps = (bytes*8)/(secs*1000*1000);
+    return { ok:true, mbps: +(mbps.toFixed(2)), bytes, secs };
+  }catch(err){
+    return { ok:false, err: String(err) };
+  }
+}
+
+/* Upload test: send blob to uploadUrl and measure time */
+async function uploadTest(uploadUrl, sizeBytes=2*1024*1024) {
+  if (!uploadUrl) return { ok:false, reason:'no-upload-endpoint' };
+  // create random blob
+  const chunk = new Uint8Array(sizeBytes);
+  crypto.getRandomValues(chunk);
+  const start = performance.now();
+  try{
+    const res = await fetch(uploadUrl, {method:'POST', body:chunk, mode:'cors'});
+    const end = performance.now();
+    const secs = (end-start)/1000;
+    const mbps = (sizeBytes*8)/(secs*1000*1000);
+    return { ok:true, mbps: +(mbps.toFixed(2)), status: res.status };
+  }catch(err){
+    return { ok:false, err: String(err) };
+  }
+}
+
+/* WebSocket-based packet loss test (best-effort). Needs an echo WS server that returns same message. */
+function wsPacketLossTest(wsUrl, totalMessages=50, intervalMs=80, timeoutMs=4000) {
+  return new Promise((resolve) => {
+    if (!wsUrl) {
+      resolve({ ok:false, reason:'no-ws-url' });
+      return;
+    }
+    let ws;
+    try { ws = new WebSocket(wsUrl); } catch(e) { resolve({ok:false, err:String(e)}); return; }
+    let sent = 0, received = 0, lost = 0;
+    const pending = new Map();
+    const startMs = performance.now();
+    const onClose = () => {
+      const end = performance.now();
+      resolve({ ok:true, sent, received, lost, startMs, end, lossRate: +(100*(sent-received)/Math.max(1,sent)).toFixed(2) });
+    };
     ws.onopen = () => {
-        let i = 0;
-        let sendOne = () => {
-            if (i >= count) {
-                let lost = sent - received;
-                let lossRate = ((lost / sent) * 100).toFixed(1);
-                let avgRTT = (rtts.reduce((a, b) => a + b, 0) / rtts.length).toFixed(2);
-
-                resultBox.textContent = `发送：${sent}\n收到：${received}\n丢包率：${lossRate}%\n平均延迟：${avgRTT} ms`;
-                ws.close();
-                return;
-            }
-
-            let t0 = performance.now();
-            ws.send(t0.toString());
-            sent++;
-            i++;
-            setTimeout(sendOne, 120);
-        };
-        sendOne();
+      log('WS open, starting packet test');
+      const timer = setInterval(()=>{
+        if (sent >= totalMessages) { clearInterval(timer); return; }
+        const id = ++sent;
+        const payload = JSON.stringify({id, t:performance.now()});
+        pending.set(id, performance.now());
+        ws.send(payload);
+      }, intervalMs);
+      // set a safety timeout
+      setTimeout(()=>{
+        // compute missing as lost
+        lost = totalMessages - received;
+        ws.close();
+      }, timeoutMs + totalMessages*intervalMs + 1000);
     };
-
-    ws.onmessage = (e) => {
+    ws.onmessage = (ev=>{
+      try{
+        const data = JSON.parse(ev.data);
+        if (!data || !data.id) { received++; return; }
+        const id = data.id;
+        if (pending.has(id)) {
+          pending.delete(id);
+          received++;
+        } else {
+          received++;
+        }
+      }catch(e){
         received++;
-        let t0 = parseFloat(e.data);
-        let rtt = performance.now() - t0;
-        rtts.push(rtt);
-    };
-}
-
-/* ===============================
-   下载带宽测试
-   =============================== */
-async function testDownload() {
-    const box = document.getElementById("downloadResult");
-    box.textContent = "测试中…";
-
-    const start = performance.now();
-    const res = await fetch(backend + "/download.bin");
-    const blob = await res.blob();
-    const end = performance.now();
-
-    const sizeMB = blob.size / (1024 * 1024);
-    const speed = (sizeMB / ((end - start) / 1000)).toFixed(2);
-
-    box.textContent = `下载文件：${sizeMB.toFixed(1)} MB\n下载速度：${speed} MB/s`;
-}
-
-/* ===============================
-   上传带宽测试
-   =============================== */
-async function testUpload() {
-    const box = document.getElementById("uploadResult");
-    box.textContent = "测试中…";
-
-    const size = 10 * 1024 * 1024; // 10MB
-    const buffer = new Uint8Array(size);
-
-    const start = performance.now();
-    const res = await fetch(backend + "/upload", {
-        method: "POST",
-        body: buffer
+      }
     });
-    const end = performance.now();
+    ws.onerror = (e=>{
+      resolve({ ok:false, err:String(e)});
+    });
+    ws.onclose = onClose;
+  });
+}
 
+/* IPv4 / IPv6 availability test: try to fetch IPv4-only / IPv6-only endpoints */
+async function ipv4ipv6Test(){
+  const out = { ipv4:false, ipv6:false, ipv4Addr:null, ipv6Addr:null };
+  try{
+    // Common public endpoints returning IP; icanhazip often used (but CORS may vary)
+    const v4 = await timedFetch('https://ipv4.icanhazip.com/', {cache:'no-store'});
+    if (v4.ok) { out.ipv4=true; out.ipv4Addr='detected'; }
+  }catch(e){}
+  try{
+    const v6 = await timedFetch('https://ipv6.icanhazip.com/', {cache:'no-store'});
+    if (v6.ok) { out.ipv6=true; out.ipv6Addr='detected'; }
+  }catch(e){}
+  return out;
+}
+
+/* DNS DoH compare: query public DoH provider for domain A record, return JSON */
+async function dohQuery(domain='example.com'){
+  try{
+    const url = 'https://cloudflare-dns.com/dns-query?name='+encodeURIComponent(domain)+'&type=A';
+    const res = await fetch(url, {headers:{Accept:'application/dns-json'}});
+    if (!res.ok) return { ok:false, status: res.status };
     const json = await res.json();
-    const speed = ((json.received / (1024 * 1024)) / ((end - start) / 1000)).toFixed(2);
-
-    box.textContent = `上传：${(size/1024/1024).toFixed(1)} MB\n上传速度：${speed} MB/s`;
+    return { ok:true, json };
+  }catch(err){
+    return { ok:false, err:String(err) };
+  }
 }
 
-/* ===============================
-   墙内延迟
-   =============================== */
-async function testDomestic() {
-    const box = document.getElementById("wallResult");
-    box.textContent = "测试中…";
-
-    const target = "https://www.qq.com/";
-
-    const t0 = performance.now();
-    await fetch(target, { mode: "no-cors" }).catch(()=>{});
-    const t1 = performance.now();
-
-    box.textContent = `墙内 RTT ≈ ${(t1 - t0).toFixed(2)} ms`;
+/* TTFB attempt: measure first-byte time for a resource */
+async function measureTTFB(url){
+  try{
+    const start = performance.now();
+    const r = await fetch(url, {cache:'no-store', mode:'no-cors'});
+    const first = performance.now();
+    return { ok:true, ttfb: Math.round(first-start) };
+  }catch(err){
+    return { ok:false, err:String(err) };
+  }
 }
 
-/* ===============================
-   墙外延迟
-   =============================== */
-async function testOversea() {
-    const box = document.getElementById("wallResult");
-    box.textContent = "测试中…";
-
-    const target = "https://www.google.com/generate_204";
-
-    const t0 = performance.now();
-    await fetch(target).catch(()=>{});
-    const t1 = performance.now();
-
-    box.textContent = `墙外 RTT ≈ ${(t1 - t0).toFixed(2)} ms`;
+/* Simple scoring rules (示例，按需调整) */
+function computeScore(metrics){
+  // metrics: {inRtt,outRtt,jitter,loss,download,upload,dnsOK}
+  let score = 100;
+  if (metrics.inRtt) {
+    if (metrics.inRtt > 200) score -= 20;
+    else if (metrics.inRtt > 100) score -= 10;
+  }
+  if (metrics.outRtt) {
+    if (metrics.outRtt > 300) score -= 25;
+    else if (metrics.outRtt > 150) score -= 12;
+  }
+  if (metrics.jitter) {
+    if (metrics.jitter > 50) score -= 12;
+    else if (metrics.jitter > 20) score -= 6;
+  }
+  if (metrics.loss) {
+    if (metrics.loss > 5) score -= 30;
+    else if (metrics.loss > 2) score -= 12;
+  }
+  if (metrics.download) {
+    if (metrics.download < 2) score -= 18;
+    else if (metrics.download < 5) score -= 8;
+  }
+  if (metrics.dnsOK === false) score -= 20;
+  return Math.max(0, Math.round(score));
 }
 
-/* ===============================
-   IP 检测
-   =============================== */
-async function testIP() {
-    const box = document.getElementById("ipResult");
-    box.textContent = "测试中…";
-
-    const res = await fetch(backend + "/ip");
-    const json = await res.json();
-
-    box.textContent = `IPv4: ${json.ipv4.join(", ")}\nIPv6: ${json.ipv6.join(", ")}`;
+/* Render helpers */
+function setText(id, text){ const e=$(id); if (e) e.textContent = text; }
+function appendHistory(item){
+  const hist = JSON.parse(localStorage.getItem('nt-history')||'[]');
+  hist.unshift(item);
+  while(hist.length>20) hist.pop();
+  localStorage.setItem('nt-history', JSON.stringify(hist));
+  renderHistory();
+}
+function renderHistory(){
+  const hist = JSON.parse(localStorage.getItem('nt-history')||'[]');
+  const el = $('history'); el.innerHTML = '';
+  if (!hist.length) { el.innerHTML = '<div class="muted">暂无记录</div>'; return; }
+  for (const row of hist) {
+    const div = document.createElement('div');
+    div.className='list-row';
+    div.innerHTML = `<div>${new Date(row.ts).toLocaleString()}</div><div style="font-weight:700">${row.score}</div><div class="muted">${row.note||''}</div>`;
+    el.appendChild(div);
+  }
 }
 
-/* ===============================
-   DNS Lookup / TTFB
-   =============================== */
-async function testDNS() {
-    const box = document.getElementById("dnsResult");
-    box.textContent = "测试中…";
+/* Main orchestrator */
+async function runFullTest(){
+  log('开始测试：采集墙内/墙外 RTT、抖动、丢包（若可）、下载/上传 以及 DNS/TTFB 信息');
+  // reset UI
+  setText('score','—'); setText('score-text','测试中...');
+  setText('latency-in','— ms'); setText('latency-out','— ms'); setText('jitter','— ms');
+  setText('loss','— %'); setText('download','— Mbps'); setText('upload','— Mbps');
+  setText('ipv4-status','—'); setText('ipv6-status','—'); setText('international-link','—'); setText('dns-result','—'); setText('ttfb','—');
 
-    const url = "https://www.cloudflare.com/";
+  // 1) measure RTTs
+  const inRes = await measureRttBatch(CONFIG.inEndpoints, 4, 90);
+  const outRes = await measureRttBatch(CONFIG.outEndpoints, 3, 120);
+  // aggregate mean per group
+  const inSamples = inRes.filter(r=>r.ok).map(r=>r.time);
+  const outSamples = outRes.filter(r=>r.ok).map(r=>r.time);
+  const inAvg = inSamples.length ? Math.round(inSamples.reduce((a,b)=>a+b,0)/inSamples.length) : null;
+  const outAvg = outSamples.length ? Math.round(outSamples.reduce((a,b)=>a+b,0)/outSamples.length) : null;
+  setText('latency-in', inAvg ? (inAvg + ' ms') : '— ms');
+  setText('latency-out', outAvg ? (outAvg + ' ms') : '— ms');
 
-    const t0 = performance.now();
-    const res = await fetch(url, { mode: "no-cors" });
-    const tTFB = performance.now() - t0;
+  // jitter from combined RTT sequence
+  const combined = inSamples.concat(outSamples);
+  const jitter = computeJitter(combined);
+  setText('jitter', jitter ? (jitter + ' ms') : '— ms');
 
-    box.textContent = `TTFB（近似）：${tTFB.toFixed(2)} ms\n无法直接测 DNS，浏览器限制`;
+  // 2) websocket packet loss (if configured)
+  let lossResult = { ok:false, reason:'wsNotConfigured' };
+  if (CONFIG.wsEchoUrl) {
+    log('尝试 WebSocket 丢包测试 ->', CONFIG.wsEchoUrl);
+    lossResult = await wsPacketLossTest(CONFIG.wsEchoUrl, 60, 60, 12000);
+    if (lossResult.ok) {
+      setText('loss', (lossResult.lossRate||0) + ' %');
+      log('WebSocket 丢包测试完成', lossResult);
+    } else {
+      setText('loss', '— %');
+      log('WebSocket 丢包测试未完成：', lossResult.reason || lossResult.err);
+    }
+  } else {
+    setText('loss', '需要 WS 回环 URL');
+    log('跳过 WebSocket 丢包测试：未配置 CONFIG.wsEchoUrl');
+  }
+
+  // 3) download test (best-effort)
+  const dl = await downloadTest(CONFIG.downloadUrl).catch(e=>({ok:false,err:String(e)}));
+  if (dl.ok && dl.mbps !== null) {
+    setText('download', dl.mbps + ' Mbps');
+  } else if (dl.ok && dl.note) {
+    setText('download', 'response opaque');
+    log('下载测试返回 opaque（无法计算 bytes），如需精确带宽请用支持 CORS 的文件或部署后端。');
+  } else {
+    setText('download', '不可用');
+    log('下载测试失败：', dl.err || dl.reason);
+  }
+
+  // 4) upload test
+  const up = await uploadTest(CONFIG.uploadUrl).catch(e=>({ok:false,err:String(e)}));
+  if (up.ok) setText('upload', up.mbps + ' Mbps');
+  else setText('upload', '需上传端点');
+
+  // 5) IPv4/IPv6
+  const ipinfo = await ipv4ipv6Test();
+  setText('ipv4-status', ipinfo.ipv4 ? 'IPv4 可用' : 'IPv4 不可用');
+  setText('ipv6-status', ipinfo.ipv6 ? 'IPv6 可用' : 'IPv6 不可用');
+
+  // 6) TTFB attempt to an external reference
+  const ttfb = await measureTTFB(CONFIG.outReference);
+  if (ttfb.ok) setText('ttfb', ttfb.ttfb + ' ms');
+  else setText('ttfb', '无法测');
+
+  // 7) DNS DoH compare (best-effort)
+  const doh = await dohQuery('example.com');
+  if (doh.ok) {
+    setText('dns-result', 'DoH 返回 A 记录数: ' + (doh.json && doh.json.Answer ? doh.json.Answer.length : '0'));
+  } else {
+    setText('dns-result', 'DoH 查询失败');
+    log('DoH 查询失败：', doh.err || doh.status);
+  }
+
+  // 8) international link health decision (simple heuristic)
+  let internationalNote = '未知';
+  if (outAvg && outAvg > 300) internationalNote = '国际链路延迟高';
+  else if (outAvg && outAvg > 120) internationalNote = '国际链路稍差';
+  else if (outAvg) internationalNote = '国际链路正常';
+  setText('international-link', internationalNote);
+
+  // assemble metrics and compute score
+  const metrics = {
+    inRtt: inAvg,
+    outRtt: outAvg,
+    jitter,
+    loss: (lossResult.ok ? Number((lossResult.lossRate||0)) : 0),
+    download: (dl.ok && dl.mbps!==null ? dl.mbps : null),
+    upload: (up.ok ? up.mbps : null),
+    dnsOK: doh.ok
+  };
+  const score = computeScore(metrics);
+  setText('score', score);
+  setText('score-text', score>80 ? '网络良好' : score>60 ? '网络可用' : '网络不稳定');
+  log('测试完成，评分：' + score);
+  appendHistory({ ts: Date.now(), score, note: internationalNote });
 }
+
+/* Wire UI */
+$('startBtn').addEventListener('click', async ()=>{
+  $('startBtn').disabled = true;
+  await runFullTest();
+  $('startBtn').disabled = false;
+});
+$('clearBtn').addEventListener('click', ()=>{
+  logEl.innerHTML = '';
+});
+
+/* init */
+renderHistory();
+log('工具就绪 - 点击 "Start Test" 开始检测。');
 
 </script>
 </body>
