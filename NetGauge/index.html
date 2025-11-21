@@ -245,7 +245,7 @@
 
 /* ========== CONFIG: 修改这些项以满足你环境 ========== */
 const CONFIG = {
-  // 墙内 RTT 测试：使用反向代理的 HTTPS 地址
+  // 墙内 RTT 测试：使用 1Panel 反向代理 HTTPS
   inEndpoints: [
     'https://10.126.126.15:8048/health',
     'https://10.126.126.15:8048/ping',
@@ -260,13 +260,14 @@ const CONFIG = {
   downloadUrl: 'https://10.126.126.15:8048/download.bin',
   // 上传测速 URL
   uploadUrl: 'https://10.126.126.15:8048/upload',
-  // WebSocket 回环地址 - 使用反向代理的 WSS 地址
+  // WebSocket 回环地址 - 通过 1Panel WSS
   wsEchoUrl: 'wss://10.126.126.15:8048/ws',
   // DoH 公共端
   dohUrl: 'https://cloudflare-dns.com/dns-query?name=example.com&type=A',
   // 墙外参考地址
   outReference: 'https://1.1.1.1/cdn-cgi/trace'
 };
+
 /* ========== END CONFIG ========== */
 
 const $ = id => document.getElementById(id);
