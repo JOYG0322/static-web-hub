@@ -261,7 +261,7 @@ const CONFIG = {
   // 上传测速 URL（需要支持 POST、并快速返回，建议部署你自己后端的 /upload 接口）
   uploadUrl: 'http://10.126.126.15:8096/upload',
   // WebSocket 回环地址（用于精确测丢包率），需要可用的 ws/wss 回环服务器
-  wsEchoUrl: 'ws://10.126.126.15:8096/ws',
+  wsEchoUrl: 'ws://10.126.126.15:8097',
   // DoH 公共端（用于 DNS 对比）
   dohUrl: 'https://cloudflare-dns.com/dns-query?name=example.com&type=A',
   // 用来判断"墙外"的参考地址（用于国际链路 RTT 判断）
@@ -617,12 +617,13 @@ async function runFullTest(){
   const inStats = getStats(inRes);
   const outStats = getStats(outRes);
 
-  // 使用 median 作为显示的代表值（比 mean 对离群值更稳健）
-  const inRep = inStats.median || inStats.mean || null;
-  const outRep = outStats.median || outStats.mean || null;
+  // 使用 median 或 mean 作为代表值
+  const inAvg = inStats.median || inStats.mean || null;
+  const outAvg = outStats.median || outStats.mean || null;
 
-  setText('latency-in', inRep ? (inRep + ' ms') : '— ms');
-  setText('latency-out', outRep ? (outRep + ' ms') : '— ms');
+  // 设置 UI 显示
+  setText('latency-in', inAvg ? (inAvg + ' ms') : '— ms');
+  setText('latency-out', outAvg ? (outAvg + ' ms') : '— ms');
 
   // 记录并输出更多诊断信息到日志（超时/样本数/90p）
   log(`墙内 RTT 样本: total=${inStats.count}, success=${inStats.success}, timeouts=${inStats.timeouts}, median=${inStats.median||'—'}ms, p90=${inStats.p90||'—'}ms`);
