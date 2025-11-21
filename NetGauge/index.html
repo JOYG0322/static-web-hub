@@ -247,9 +247,9 @@
 const CONFIG = {
   // 墙内 RTT 测试：尽量使用支持 CORS 的国内站点或你的内网节点
   inEndpoints: [
-    'http://10.126.126.15:8096/health',
-    'http://10.126.126.15:8096/ping',
-    'https://www.baidu.com/',
+    'https://10.126.126.15:8096/health',
+    'https://10.126.126.15:8096/ping',
+    'https://www.huorong.cn/',
   ],
   // 墙外 RTT 测试：公共可访问的外网站点（CORS 不是必须，因为我们测时间，不读取 body）
   outEndpoints: [
@@ -257,11 +257,11 @@ const CONFIG = {
     'https://cloudflare.com/cdn-cgi/trace'
   ],
   // 下载测速 URL（必须支持大文件和 CORS；若不支持 CORS，可通过你自己的后端中转）
-  downloadUrl: 'http://10.126.126.15:8096/download.bin',
+  downloadUrl: 'https://10.126.126.15:8096/download.bin',
   // 上传测速 URL（需要支持 POST、并快速返回，建议部署你自己后端的 /upload 接口）
-  uploadUrl: 'http://10.126.126.15:8096/upload',
+  uploadUrl: 'https://10.126.126.15:8096/upload',
   // WebSocket 回环地址（用于精确测丢包率），需要可用的 ws/wss 回环服务器
-  wsEchoUrl: 'ws://10.126.126.15:8097',
+  wsEchoUrl: 'wss://10.126.126.15:8097',
   // DoH 公共端（用于 DNS 对比）
   dohUrl: 'https://cloudflare-dns.com/dns-query?name=example.com&type=A',
   // 用来判断"墙外"的参考地址（用于国际链路 RTT 判断）
