@@ -398,7 +398,7 @@
     <div class="browser-warning" id="browserWarning"></div>
     
     <div class="container">
-        <div class="title_"><img src="assets/icon.png" class="logo"><div class="word"> DeerTube</div></div>
+        <div class="title_"><img src="../assets/icon.png" class="logo"><div class="word"> DeerTube</div></div>
         <div class="search_">
             <select id="Protocol" name="Protocol" class="Protocol">
                 <option value="http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=">WHEP</option>
@@ -421,9 +421,10 @@
             </div>
         </div>
         <div class="buttons">
-            <button onclick="connect_CMHH()" class="button_play"><img src="assets/cmhh.jpg" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
-            <button onclick="connect_JOYG()" class="button_play"><img src="assets/joyg.jpg" class="head_img" streamname="JOYG">[直播]JOYG</button>
-            <button onclick="connect_PL()" class="button_play"><img src="assets/pl.jpg" class="head_img" streamname="PL">[直播]Pure1ove</button>
+            <button onclick="connect_CMHH()" class="button_play"><img src="../assets/cmhh.jpg" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
+            <button onclick="connect_JOYG()" class="button_play"><img src="../assets/joyg.jpg" class="head_img" streamname="JOYG">[直播]JOYG</button>
+            <button onclick="connect_PL()" class="button_play"><img src="../assets/pl.jpg" class="head_img" streamname="PL">[直播]Pure1ove</button>
+            <button onclick="connect_LJY()" class="button_play"><img src="../assets/ljy.jpg" class="head_img" streamname="LJY">[直播]DJ_Hero</button>
         </div>
     </div>
     
@@ -3689,6 +3690,7 @@
         const whepUrl_JOYG = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG';
         const whepUrl_CMHH = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=CMHH';
         const whepUrl_PL = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=PL';
+        const whepUrl_LJY = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=LJY';
         window.whepUrl_ref = ''
 
         function isMobileDevice() {
@@ -4126,6 +4128,16 @@
             } catch (error) {
                 updateStatus('连接失败: ');
                 console.error('连接 CMHH 错误:');
+            }
+        }
+
+        async function connect_LJY() {
+            try {
+                window.whepUrl_ref = whepUrl_LJY;
+                connect_play();
+            } catch (error) {
+                updateStatus('连接失败: ');
+                console.error('连接 LJY 错误:');
             }
         }
         function disconnect() {
