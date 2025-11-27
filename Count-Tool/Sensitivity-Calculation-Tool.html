@@ -157,7 +157,7 @@
 							<button id="calcBtn" type="button" disabled style="flex:0 0 160px;padding:12px 18px;font-size:16px">计算</button>
 							<div id="output" class="output" aria-live="polite" role="status" style="flex:1;padding:12px 14px;border-radius:8px;border:1px dashed rgba(255,255,255,0.04);font-size:20px;font-weight:600;color:var(--muted)">目标cm/360°</div>
 						</div>
-						<p class="note" style="margin-top:8px;color:var(--muted);font-size:13px">提示：仅输入正的浮点数</p>
+						<p class="note" style="margin-top:8px;color:var(--muted);font-size:13px">提示：仅输入正的浮点数</p><a href="https://www.mouse-sensitivity.com" target="_blank" rel="noopener noreferrer">更多计算</a>
 						<div class="footer" style="text-align:right;color:var(--muted);font-size:12px">GitHub Copilot 界面 | Chaoji_Mouse 算法</div>
 					</div>
 				</form>
@@ -170,73 +170,6 @@
 				</select>
 				<div id="tipContent" class="tip-content" role="region" aria-live="polite">本网站为一个用于计算不同视场下灵敏度的工具，支持不同游戏的计算。旨在与在不同fov下移动鼠标准心移动距离相同，本网站在github上开源，欢迎反馈和贡献。</div>
 			</aside>
-		</div>
-
-		<!-- 第二部分：额外计算器并排显示 -->
-		<div class="extra-cards" style="display:flex;gap:24px;justify-content:center;width:100%;max-width:calc(720px + 18px + 300px);margin-top:24px;">
-			<!-- 卡片3 -->
-			<div class="extra-card" role="region" aria-label="额外计算器" style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.45);padding:24px;">
-				<div class="header" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-					<div class="logo" style="width:44px;height:44px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;">S</div>
-					<div style="min-width:0">
-						<h1 style="font-size:18px;margin:0">根据cm/360°计算游戏内灵敏度</h1>
-						<p class="lead" style="margin:4px 0 0;font-size:13px;color:var(--muted)">输入参数以计算目标灵敏度</p>
-					</div>
-				</div>
-
-				<form id="extraCalcForm" onsubmit="return false;">
-					<div class="form" style="display:flex;flex-direction:column;gap:14px;">
-						<div class="field" style="display:flex;flex-direction:column;gap:6px">
-							<label for="e1" style="font-size:13px;color:var(--muted)">目标cm/360°</label>
-							<input id="e1" class="extra-input" type="number" step="any" min="0.0000001" inputmode="decimal" required placeholder="cm/360°" aria-label="输入 1" style="width:100%;font-size:16px;padding:12px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff;"/>
-						</div>
-						<div class="field" style="display:flex;flex-direction:column;gap:6px">
-							<label for="e2" style="font-size:13px;color:var(--muted)">鼠标DPI</label>
-							<input id="e2" class="extra-input" type="number" step="any" min="0.0000001" inputmode="decimal" required placeholder="DPI" aria-label="输入 2" style="width:100%;font-size:16px;padding:12px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff;"/>
-						</div>
-						<div class="field" style="display:flex;flex-direction:column;gap:6px">
-							<label for="e3" style="font-size:13px;color:var(--muted)">目标游戏Yaw</label>
-							<input id="e3" class="extra-input" type="number" step="any" min="0.0000001" inputmode="decimal" required placeholder="Yaw" aria-label="输入 3" style="width:100%;font-size:16px;padding:12px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff;"/>
-						</div>
-						<div class="controls" style="display:flex;gap:12px;align-items:center;margin-top:6px">
-							<button id="extraCalcBtn" type="button" disabled style="flex:0 0 160px;padding:12px 18px;font-size:16px">计算</button>
-							<div id="extraOutput" class="output" aria-live="polite" role="status" style="flex:1;padding:12px 14px;border-radius:8px;border:1px dashed rgba(255,255,255,0.04);font-size:20px;font-weight:600;color:var(--muted)">目标灵敏度</div>
-						</div>
-					</div>
-				</form>
-			</div>
-
-			<!-- 卡片4 -->
-			<div class="extra-card" role="region" aria-label="额外计算器 2" style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.45);padding:24px;">
-				<div class="header" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-					<div class="logo" style="width:44px;height:44px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;">Y</div>
-					<div style="min-width:0">
-						<h1 style="font-size:18px;margin:0">根据参数计算Yaw<a href="https://www.mouse-sensitivity.com" target="_blank">   我该从哪里获得这些参数</a></h1>
-						<p class="lead" style="margin:4px 0 0;font-size:13px;color:var(--muted)">输入参数以计算Yaw</p>
-					</div>
-				</div>
-
-				<form id="extraCalcForm2" onsubmit="return false;">
-					<div class="form" style="display:flex;flex-direction:column;gap:14px;">
-						<div class="field" style="display:flex;flex-direction:column;gap:6px">
-							<label for="e4" style="font-size:13px;color:var(--muted)">鼠标DPI</label>
-							<input id="e4" class="extra-input-2" type="number" step="any" min="0.0000001" inputmode="decimal" required placeholder="DPI" aria-label="输入 1" style="width:100%;font-size:16px;padding:12px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff;"/>
-						</div>
-						<div class="field" style="display:flex;flex-direction:column;gap:6px">
-							<label for="e5" style="font-size:13px;color:var(--muted)">灵敏度参数</label>
-							<input id="e5" class="extra-input-2" type="number" step="any" min="0.0000001" inputmode="decimal" required placeholder="灵敏度" aria-label="输入 2" style="width:100%;font-size:16px;padding:12px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff;"/>
-						</div>
-						<div class="field" style="display:flex;flex-direction:column;gap:6px">
-							<label for="e6" style="font-size:13px;color:var(--muted)">cm/360°</label>
-							<input id="e6" class="extra-input-2" type="number" step="any" min="0.0000001" inputmode="decimal" required placeholder="cm/360°" aria-label="输入 3" style="width:100%;font-size:16px;padding:12px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff;"/>
-						</div>
-						<div class="controls" style="display:flex;gap:12px;align-items:center;margin-top:6px">
-							<button id="extraCalcBtn2" type="button" disabled style="flex:0 0 160px;padding:12px 18px;font-size:16px">计算</button>
-							<div id="extraOutput2" class="output" aria-live="polite" role="status" style="flex:1;padding:12px 14px;border-radius:8px;border:1px dashed rgba(255,255,255,0.04);font-size:20px;font-weight:600;color:var(--muted)">目标Yaw</div>
-						</div>
-					</div>
-				</form>
-			</div>
 		</div>
 
 		<!-- 添加 GitHub 仓库地址 -->
@@ -311,18 +244,9 @@
 		// ====== 提示栏逻辑 ======
 		// 示例提示，可替换为任意长文本
 		const tips = [
-			{ id:'t1', title:'这些参数是什么', content:'Fov:\nFOV 是 Field Of View 的缩写，中文译为 视场角 或 视野范围。\nHFOV 是 Horizontal Field Of View 的缩写，中文译为 水平视场角。它描述的是在 水平方向（从左到右） 上能看到的场景的角度范围。\nVFOV 是 Vertical Field Of View 的缩写，中文译为 垂直视场角。它描述的是在 垂直方向（从上到下） 上能看到的场景的角度范围。\n\ncm/360°:\ncm/360° 的全称是 Centimeters per 360 Degrees。它指的是你的 物理鼠标需要在鼠标垫上移动多少厘米的距离，才能使你在游戏中的视角（准星）完整地旋转一周（360度）。它是衡量 游戏鼠标灵敏度 的一个绝对物理标准。此参数会随着edpi变化而变化，值得注意的是此参数不代表游戏灵敏度参数，若要得知灵敏度参数需要使用下面的工具进行计算\n\nYaw:\nm_yaw 是存在于许多第一人称射击游戏引擎（尤其是 Source引擎，如 CS:GO, 以及 Quake, GoldSrc 等）中的一个 控制台变量。它专门用于调节 鼠标水平移动 对游戏中视角 偏航角 影响的 灵敏度系数。它控制你 左右移动鼠标 时，视角 左右转动 的速度。转动角度 = 鼠标移动量 × 灵敏度系数 × (m_yaw 或 m_pitch)其中m_pitch则代表的是垂直方向上的值' },
-			{ id:'t9', title:'注意事项', content:'数据均来源于网络，可能存在不准确，若有需要校准请向仓库提交\n部分游戏(如战地6)的计算结果可能需要*10或/10\n计算灵敏度时需要考虑拉伸情况(如CS2)' },
-            { id:'t10', title:'关于mouse-sensitivity', content:'注:本网页与mouse-sensitivity不存在任何关系\nmouse-sensitivity.com 是一个旨在帮助玩家在不同游戏、不同分辨率、不同显示器下，保持完全一致的鼠标手感（肌肉记忆） 的专业网站。它通过精确的数学计算，将你在一个游戏中的灵敏度，准确地转换到另一个游戏中。\n为什么不直接使用mouse-sensitivity?\n在mouse-sensitivity中灵敏度计算没有考虑fov等因素，其结果只是为了使不同游戏达到相同的cm/360°(无贬义)，而本网站是通过对fov等计算让用户能在不同fov下移动鼠标能使准心移动相同距离，故此网站用途并不冲突\n为什么引用mouse-sensitivity\nmouse-sensitivity拥有庞大的数据库以及精确的算法，可以从mouse-sensitivity获取精确数据' },
-            { id:'t2', title:'寒霜引擎', content:'Yaw通常为0.022\n战地6-0.02439\n战地1,3,4,5,2042-0.014897\n-来源于网络' },
-			{ id:'t3', title:'虚幻引擎(UE4,UE5)', content:'Yaw通常为0.022\nDelta Force-0.01\n-来源于网络' },
-			{ id:'t4', title:'起源(S1,S2)引擎', content:'Yaw通常为0.022\nCS2vFov为73.74,注意灵敏度计算需要考虑拉伸情况\n-来源于网络' },
-            { id:'t5', title:'OverWatch', content:'Yaw通常为0.0066\n-来源于网络' },
-            { id:'t6', title:'Rainbow Six Siege', content:'Yaw通常为0.005729\n-来源于网络' },
-            { id:'t7', title:'使命召唤系列', content:'Yaw未知' },
-            { id:'t8', title:'Fortnite', content:'Yaw通常为0.005729\n-来源于网络' },
+			{ id:'t1', title:'这些参数是什么', content:'Fov:\nFOV 是 Field Of View 的缩写，中文译为 视场角 或 视野范围。\nHFOV 是 Horizontal Field Of View 的缩写，中文译为 水平视场角。它描述的是在 水平方向（从左到右） 上能看到的场景的角度范围。\nVFOV 是 Vertical Field Of View 的缩写，中文译为 垂直视场角。它描述的是在 垂直方向（从上到下） 上能看到的场景的角度范围。\n\ncm/360°:\ncm/360° 的全称是 Centimeters per 360 Degrees。它指的是你的 物理鼠标需要在鼠标垫上移动多少厘米的距离，才能使你在游戏中的视角（准星）完整地旋转一周（360度）。它是衡量 游戏鼠标灵敏度 的一个绝对物理标准。此参数会随着edpi变化而变化，值得注意的是此参数不代表游戏灵敏度参数，若要得知灵敏度参数需要使用下面的工具进行计算'},
+            { id:'t2', title:'关于引用mouse-sensitivity', content:'注:本网页与mouse-sensitivity不存在任何关系\n引用mouse-sensitivity仅为方便用户'},
 		];
-
 		const tipSelect = document.getElementById('tipSelect');
 		const tipContent = document.getElementById('tipContent');
 
@@ -338,7 +262,7 @@
 		tipSelect.addEventListener('change', ()=>{
 			const id = tipSelect.value;
 			if(!id){
-				tipContent.textContent = '本网站为一个用于计算不同视场下灵敏度的工具，支持不同游戏的计算。旨在与在不同fov下移动鼠标准心移动距离相同，本网站在github上开源，欢迎反馈和贡献。';
+				tipContent.textContent = '本网站为一个用于计算不同视场下灵敏度的工具，支持不同游戏的计算。旨在计算不同fov下使移动鼠标准心移动距离相同的cm/360，本网站在github上开源，欢迎反馈和贡献。';
 				return;
 			}
 			const sel = tips.find(x=>x.id === id);
@@ -346,101 +270,7 @@
 			tipContent.scrollTop = 0;
 		});
 		// 初始不选中（保持默认文本）
-		tipContent.textContent = '本网站为一个用于计算不同视场下灵敏度的工具，支持不同游戏的计算。旨在与在不同fov下移动鼠标准心移动距离相同，本网站在github上开源，欢迎反馈和贡献。';
-
-		// ====== 额外计算器逻辑 ======
-		const extraBtn = document.getElementById('extraCalcBtn');
-		const extraInputs = Array.from(document.querySelectorAll('.extra-input'));
-		const extraOutput = document.getElementById('extraOutput');
-
-		function validateExtraInputs() {
-			for (const i of extraInputs) {
-				const v = i.value.trim();
-				const n = parseFloat(v);
-				if (!Number.isFinite(n) || n <= 0) return { ok: false, msg: '请输入大于 0 的正浮点数' };
-			}
-			return { ok: true };
-		}
-
-		function updateExtraButtonState() {
-			const v = validateExtraInputs();
-			extraBtn.disabled = !v.ok;
-			extraOutput.textContent = '目标灵敏度';
-			extraOutput.style.color = 'var(--muted)';
-		}
-
-		// 绑定实时校验
-		extraInputs.forEach(i => {
-			i.addEventListener('input', updateExtraButtonState);
-			i.addEventListener('change', updateExtraButtonState);
-		});
-
-		// 初始状态
-		updateExtraButtonState();
-
-		extraBtn.addEventListener('click', () => {
-			const v = validateExtraInputs();
-			if (!v.ok) {
-				extraOutput.textContent = '请输入大于 0 的正浮点数';
-				extraOutput.style.color = '#ffb3b3';
-				return;
-			}
-            const cm360_3 = parseFloat(document.getElementById('e1').value.trim());
-            const dpi = parseFloat(document.getElementById('e2').value.trim());
-            const yaw = parseFloat(document.getElementById('e3').value.trim());
-            // 计算灵敏度
-            const result = 914.4 / (cm360_3 * dpi * yaw);
-			extraOutput.textContent = '结果: ' + result.toFixed(6);
-			extraOutput.style.color = 'var(--muted)';
-		});
-
-		// ====== 额外计算器 2 逻辑 ======
-		const extraBtn2 = document.getElementById('extraCalcBtn2');
-		const extraInputs2 = Array.from(document.querySelectorAll('.extra-input-2'));
-		const extraOutput2 = document.getElementById('extraOutput2');
-
-		function validateExtraInputs2() {
-			for (const i of extraInputs2) {
-				const v = i.value.trim();
-				const n = parseFloat(v);
-				if (!Number.isFinite(n) || n <= 0) return { ok: false, msg: '请输入大于 0 的正浮点数' };
-			}
-			return { ok: true };
-		}
-
-		function updateExtraButtonState2() {
-			const v = validateExtraInputs2();
-			extraBtn2.disabled = !v.ok;
-			extraOutput2.textContent = '目标Yaw';
-			extraOutput2.style.color = 'var(--muted)';
-		}
-
-		// 绑定实时校验
-		extraInputs2.forEach(i => {
-			i.addEventListener('input', updateExtraButtonState2);
-			i.addEventListener('change', updateExtraButtonState2);
-		});
-
-		// 初始状态
-		updateExtraButtonState2();
-
-		extraBtn2.addEventListener('click', () => {
-			const v = validateExtraInputs2();
-			if (!v.ok) {
-				extraOutput2.textContent = '请输入大于 0 的正浮点数';
-				extraOutput2.style.color = '#ffb3b3';
-				return;
-			}
-            // 获取输入值
-            const dpi = parseFloat(document.getElementById('e4').value.trim());
-            const sensitivity = parseFloat(document.getElementById('e5').value.trim());
-            const cm360 = parseFloat(document.getElementById('e6').value.trim());
-            // 这里可以添加针对额外计算器 2 的计算逻辑
-            // 示例：简单相加
-            const result = 914.4/(dpi * sensitivity * cm360);
-            extraOutput2.textContent = '结果Yaw: ' + result.toFixed(6);
-            extraOutput2.style.color = 'var(--muted)';
-		});
+		tipContent.textContent = '本网站为一个用于计算不同视场下灵敏度的工具，支持不同游戏的计算。旨在计算不同fov下使移动鼠标准心移动距离相同的cm/360，本网站在github上开源，欢迎反馈和贡献。';
 	</script>
 </body>
 </html>
