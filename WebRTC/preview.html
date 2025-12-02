@@ -64,6 +64,11 @@ h1 {
 .upload-btn:hover {
     background: #007fb3;
 }
+.status {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #a0a0a0;
+}
 </style>
 </head>
 <body>
@@ -83,14 +88,13 @@ const USERS = [
 const container = document.getElementById('container');
 
 USERS.forEach(user => {
-    // 创建卡片元素
     const card = document.createElement('div');
     card.className = 'card';
 
     // 头像
     const img = document.createElement('img');
     img.className = 'avatar';
-    img.src = `../assets/${user.key}.jpg`; // 默认 jpg，可手动刷新后缀
+    img.src = `../assets/${user.key}.jpg`; 
     img.alt = user.name;
     card.appendChild(img);
 
@@ -106,47 +110,53 @@ USERS.forEach(user => {
     uploadBtn.textContent = '上传头像';
     card.appendChild(uploadBtn);
 
-    // 上传 input（隐藏）
+    // 上传状态显示
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'status';
+    card.appendChild(statusDiv);
+
+    // 隐藏文件 input
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = '.jpg,.jpeg,.png,.gif';
     fileInput.style.display = 'none';
     card.appendChild(fileInput);
 
-    // 点击按钮触发文件选择
+    // 点击按钮触发选择
     uploadBtn.addEventListener('click', () => fileInput.click());
 
     // 文件选择后上传
     fileInput.addEventListener('change', async (event) => {
         const file = event.target.files[0];
         if (!file) return;
+
         const formData = new FormData();
-        formData.append('user', user.key);
-        formData.append('file', file);
+        formData.append('image', file);
 
         uploadBtn.textContent = '上传中...';
         uploadBtn.disabled = true;
+        statusDiv.textContent = '';
 
         try {
-            const res = await fetch('http://10.126.126.15:8901/upload', {
+            const res = await fetch('http://10.126.126.15:3000/convert', {
                 method: 'POST',
                 body: formData
             });
             const data = await res.json();
-            if (res.ok) {
-                // 刷新头像（加时间戳避免缓存）
-                img.src = `../assets/${user.key}${file.name.substring(file.name.lastIndexOf('.'))}?t=${Date.now()}`;
-                alert('上传成功');
+            if (res.ok && data.success) {
+                // 刷新头像为生成的 GIF
+                img.src = `http://10.126.126.15:3000${data.output}?t=${Date.now()}`;
+                statusDiv.textContent = '上传成功';
             } else {
-                alert(data.error || '上传失败');
+                statusDiv.textContent = data.error || '上传失败';
             }
         } catch (err) {
             console.error(err);
-            alert('网络或服务器错误');
+            statusDiv.textContent = '网络或服务器错误';
         } finally {
             uploadBtn.textContent = '上传头像';
             uploadBtn.disabled = false;
-            fileInput.value = ''; // 重置文件输入
+            fileInput.value = '';
         }
     });
 
