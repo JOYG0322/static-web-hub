@@ -94,7 +94,7 @@ USERS.forEach(user => {
     // 头像
     const img = document.createElement('img');
     img.className = 'avatar';
-    img.src = `../assets/${user.key}.jpg`; 
+    img.src = `/assets/${user.key}.gif?t=${Date.now()}`; 
     img.alt = user.name;
     card.appendChild(img);
 
@@ -122,7 +122,7 @@ USERS.forEach(user => {
     fileInput.style.display = 'none';
     card.appendChild(fileInput);
 
-    // 点击按钮触发选择
+    // 点击按钮触发选择文件
     uploadBtn.addEventListener('click', () => fileInput.click());
 
     // 文件选择后上传
@@ -131,7 +131,8 @@ USERS.forEach(user => {
         if (!file) return;
 
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('user', user.key); // 关键：传 user 字段
+        formData.append('file', file);     // Multer 接收 'file'
 
         uploadBtn.textContent = '上传中...';
         uploadBtn.disabled = true;
@@ -144,8 +145,8 @@ USERS.forEach(user => {
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                // 刷新头像为生成的 GIF
-                img.src = `http://10.126.126.15:3000${data.output}?t=${Date.now()}`;
+                // 刷新头像，覆盖原文件
+                img.src = `/assets/${user.key}.gif?t=${Date.now()}`;
                 statusDiv.textContent = '上传成功';
             } else {
                 statusDiv.textContent = data.error || '上传失败';
