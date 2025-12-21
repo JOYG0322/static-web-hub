@@ -4142,6 +4142,16 @@
                 console.error('连接 LJY 错误:');
             }
         }
+
+        async function connect_aaa() {
+            try {
+                window.whepUrl_ref = whepUrl_aaa;
+                connect_play();
+            } catch (error) {
+                updateStatus('连接失败: ');
+                console.error('连接 aaa 错误:');
+            }
+        }
         function disconnect() {
             if (pc) {
                 pc.close();
