@@ -134,7 +134,7 @@ startBtn.onclick = async () => {
 
         statusEl.textContent = '连接 MediaMTX…';
 
-        const res = await fetch(`http://${host}:8889/screen/webrtc/`, {
+        const res = await fetch(`http://${host}:8889/screen/whip`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/sdp'
@@ -142,11 +142,17 @@ startBtn.onclick = async () => {
             body: offer.sdp
         });
 
+        if (!res.ok) {
+            throw new Error(`MediaMTX 返回 ${res.status}`);
+        }
+
         const answerSDP = await res.text();
+
         await pc.setRemoteDescription({
             type: 'answer',
             sdp: answerSDP
         });
+
 
         statusEl.textContent = `正在共享（用户：${user}）`;
 
