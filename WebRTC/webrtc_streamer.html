@@ -1,302 +1,160 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>内网 WHIP 屏幕共享推流（SRS）——简洁可扩展</title>
-  <link rel="icon" type="image/png" href="../assets/icon.png" />
-  <style>
-    :root{ --bg:#071025; --card:#0b1320; --muted:#9ca3af; --accent:#3b82f6; }
-    html,body{ height:100%; margin:0; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial; background:linear-gradient(180deg,#071025 0%, #081427 100%); color:#e6eef8; }
-    .container{ max-width:1100px; margin:20px auto; padding:16px; }
-    .grid{ display:grid; gap:12px; grid-template-columns: 1fr 360px; }
-    .card{ background:rgba(255,255,255,0.02); border-radius:10px; padding:12px; box-shadow:0 6px 16px rgba(2,6,23,0.6); }
-    h1{ margin:0 0 8px 0; font-size:18px; }
-    label{ font-size:13px; color:var(--muted); }
-    select,input,button,textarea{ font-size:13px; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:inherit; }
-    button{ cursor:pointer; background:linear-gradient(90deg,var(--accent), #60a5fa); border:none; color:#03203b; font-weight:600; }
-    video{ width:100%; background:#000; border-radius:8px; display:block; }
-    pre{ background:#041025; padding:8px; border-radius:8px; overflow:auto; font-size:12px; }
-    .muted{ color:var(--muted); font-size:13px; }
-    .controls{ display:flex; flex-direction:column; gap:8px; }
-    .section-title{ font-weight:600; margin-top:6px; }
-    @media(max-width:900px){ .grid{ grid-template-columns: 1fr; } }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>内网屏幕共享</title>
+
+<style>
+:root {
+    --bg-dark: #1a1a1a;
+    --bg-card: #2c2c2c;
+    --bg-hover: #3e3e3e;
+    --text-main: #e0e0e0;
+    --text-sub: #cccccc;
+    --accent: #00a1d6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+}
+
+.container {
+    max-width: 420px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.card {
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+h1 {
+    margin: 0 0 16px;
+    font-size: 20px;
+    text-align: center;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-top: 14px;
+}
+
+input {
+    width: 100%;
+    margin-top: 6px;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    background: #111;
+    color: var(--text-main);
+}
+
+button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.status {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+    text-align: center;
+}
+</style>
 </head>
+
 <body>
-  <div class="container">
+<div class="container">
     <div class="card">
-      <h1>内网 WHIP 屏幕共享推流（面向 SRS）</h1>
-      <div class="muted small">说明：单文件纯 HTML/JS，主要展示桌面屏幕共享（getDisplayMedia -> WHIP 发布到 SRS）。仅支持 Chrome/Firefox（桌面）。</div>
+        <h1>屏幕共享</h1>
+
+        <label>MediaMTX 地址</label>
+        <input id="host" placeholder="例如：10.0.0.10" value="127.0.0.1" />
+
+        <label>用户名</label>
+        <input id="user" placeholder="zhangsan / lisi / roomA" />
+
+        <button id="startBtn">开始共享</button>
+
+        <div class="status" id="status">未连接</div>
     </div>
-
-    <div class="grid" style="margin-top:12px;">
-      <div class="card">
-        <div class="section-title">本地预览（屏幕共享 / 摄像头 切换）</div>
-        <video id="localVideo" autoplay muted playsinline></video>
-        <div class="muted small">注意：屏幕共享使用浏览器的 getDisplayMedia，由浏览器弹窗选择应用窗口/标签页/整个屏幕。浏览器安全策略可能限制 HTTP 下的权限，请参见注释。</div>
-
-        <div style="height:12px"></div>
-        <div class="controls">
-          <div class="row">
-            <label>来源</label>
-            <select id="sourceType">
-              <option value="screen">屏幕共享（推荐）</option>
-              <option value="camera">摄像头（备用）</option>
-            </select>
-            <label>摄像头（仅当来源=摄像头 时可选）</label>
-            <select id="videoSelect"></select>
-            <label>麦克风（可选）</label>
-            <select id="audioSelect"></select>
-          </div>
-
-          <div class="row">
-            <label>分辨率预设</label>
-            <select id="resolution">
-              <option value="1280x720">1280×720</option>
-              <option value="1920x1080">1920×1080</option>
-            </select>
-
-            <label>帧率</label>
-            <select id="framerate">
-              <option value="15">15</option>
-              <option value="30">30</option>
-              <option value="60">60</option>
-            </select>
-
-            <label>码率预设(kbps)</label>
-            <select id="bitrate">
-              <option value="1000">1000</option>
-              <option value="2000">2000</option>
-              <option value="4000">4000</option>
-              <option value="8000">8000</option>
-            </select>
-          </div>
-
-          <div class="row">
-            <button id="startBtn">开始预览</button>
-            <button id="stopBtn" disabled>停止预览</button>
-            <button id="toggleMic" disabled>麦克风 静音/开启</button>
-          </div>
-
-          <div style="height:6px"></div>
-
-          <div class="section-title">WHIP 推流（发布到 SRS）</div>
-          <label>WHIP 发布 URL（例如：http://10.126.xxx.xxx:1985/whip/app/stream）</label>
-          <input id="whipUrl" placeholder="http://10.126.x.x:1985/whip/your_app/your_stream" />
-
-          <div class="row">
-            <button id="publishBtn" disabled>开始推流（WHIP POST）</button>
-            <button id="stopPublishBtn" disabled>停止推流（WHIP DELETE）</button>
-          </div>
-
-          <div class="muted small">说明：屏幕共享会把视频轨与可选音频轨（麦克风）一并发送到服务器；浏览器会弹出选择窗口供你选取要共享的屏幕/窗口/标签页。</div>
-
-          <div style="height:12px"></div>
-          <div class="section-title">本地/恢复设置</div>
-          <div class="row">
-            <button id="saveSettings">保存到本地</button>
-            <button id="loadSettings">加载本地设置</button>
-            <button id="resetSettings">重置</button>
-          </div>
-
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="section-title">状态与日志</div>
-        <div id="status" class="muted small">就绪</div>
-        <div style="height:10px"></div>
-        <div class="section-title">简要统计</div>
-        <pre id="stats">无</pre>
-        <div style="height:10px"></div>
-        <div class="section-title">日志</div>
-        <pre id="log">日志初始化
-</pre>
-      </div>
-    </div>
-  </div>
+</div>
 
 <script>
-/*
-  更新说明（中文注释）
-  - 已将默认采集改为 屏幕共享（getDisplayMedia）。也保留摄像头选项作为备用。
-  - 屏幕共享在浏览器中会弹出选择对话框，用户可以选择窗口/标签页/整个屏幕。
-  - 在 HTTP（非 HTTPS）上下文中，浏览器可能拒绝或限制 getDisplayMedia/getUserMedia。内网测试可使用启动参数或把页面放到受信任的本地 https。代码中有提示。
-  - 其他 WHIP 推流逻辑与之前一致（创建 Offer -> 等待 ICE gather -> POST SDP -> 处理 Answer -> 可 DELETE session）。
-*/
+const startBtn = document.getElementById('startBtn');
+const statusEl = document.getElementById('status');
 
-const el = {
-  localVideo: document.getElementById('localVideo'),
-  sourceType: document.getElementById('sourceType'),
-  videoSelect: document.getElementById('videoSelect'),
-  audioSelect: document.getElementById('audioSelect'),
-  startBtn: document.getElementById('startBtn'),
-  stopBtn: document.getElementById('stopBtn'),
-  toggleMic: document.getElementById('toggleMic'),
-  resolution: document.getElementById('resolution'),
-  framerate: document.getElementById('framerate'),
-  bitrate: document.getElementById('bitrate'),
-  whipUrl: document.getElementById('whipUrl'),
-  publishBtn: document.getElementById('publishBtn'),
-  stopPublishBtn: document.getElementById('stopPublishBtn'),
-  saveSettings: document.getElementById('saveSettings'),
-  loadSettings: document.getElementById('loadSettings'),
-  resetSettings: document.getElementById('resetSettings'),
-  status: document.getElementById('status'),
-  log: document.getElementById('log'),
-  stats: document.getElementById('stats'),
-};
+startBtn.onclick = async () => {
+    const host = document.getElementById('host').value.trim();
+    const user = document.getElementById('user').value.trim() || 'anonymous';
 
-// ===== 状态变量 =====
-let localStream = null;
-let pc = null;
-let publishResourceUrl = null;
-let publishEtag = null;
-let savedSettingsKey = 'webrtc_whip_settings_v1';
-let isMicMuted = false;
-let statsTimer = null;
-let reconnectAttempts = 0;
-let reconnectTimer = null;
+    try {
+        statusEl.textContent = '请求屏幕权限…';
 
-// ===== 日志/状态工具 =====
-function log(msg){
-  const t = new Date().toISOString();
-  el.log.textContent += `[${t}] ${msg}
-`;
-  el.log.scrollTop = el.log.scrollHeight;
-  console.log(msg);
-}
-function setStatus(s){ el.status.textContent = s; }
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                frameRate: { ideal: 15, max: 30 },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            },
+            audio: false
+        });
 
-// ===== 设备枚举（仅用于摄像头/麦克风 备选） =====
-async function enumerateDevices(){
-  try{
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const vids = devices.filter(d => d.kind === 'videoinput');
-    const auds = devices.filter(d => d.kind === 'audioinput');
-    el.videoSelect.innerHTML = '';
-    el.audioSelect.innerHTML = '';
-    vids.forEach((v,i)=>{ const o=document.createElement('option'); o.value=v.deviceId; o.textContent=v.label||`摄像头 ${i+1}`; el.videoSelect.appendChild(o); });
-    auds.forEach((a,i)=>{ const o=document.createElement('option'); o.value=a.deviceId; o.textContent=a.label||`麦克风 ${i+1}`; el.audioSelect.appendChild(o); });
-  }catch(e){ log('enumerateDevices 错误: '+e); }
-}
+        const pc = new RTCPeerConnection();
 
-function constraintsFromUI(){
-  const [w,h] = el.resolution.value.split('x').map(x=>parseInt(x));
-  const fps = parseInt(el.framerate.value);
-  const audioDeviceId = el.audioSelect.value || undefined;
-  return { audio: audioDeviceId ? { deviceId: { exact: audioDeviceId } } : true, video: { width:{ ideal: w }, height:{ ideal: h }, frameRate: { ideal: fps } } };
-}
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-// ===== 启动/停止本地预览（支持屏幕共享或摄像头） =====
-async function startPreview(){
-  try{
-    if(localStream) stopPreview();
-    const source = el.sourceType.value;
-    if(source === 'screen'){
-      // 屏幕共享：使用 getDisplayMedia
-      // 注意：部分浏览器在非安全上下文会限制此功能
-      localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-      // 如果用户同时想把麦克风的声音合并进来，需要 getUserMedia({audio:true}) 并把音轨合并
-      // 下面代码将麦克风（若选择）合并到已有的屏幕流
-      if(el.audioSelect.value){
-        try{
-          const micStream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: el.audioSelect.value } } });
-          const micTrack = micStream.getAudioTracks()[0];
-          if(micTrack) localStream.addTrack(micTrack);
-        }catch(e){ log('获取麦克风失败: '+e); }
-      }
-    }else{
-      // 摄像头预览（备用）
-      const c = constraintsFromUI();
-      localStream = await navigator.mediaDevices.getUserMedia(c);
+        pc.onconnectionstatechange = () => {
+            statusEl.textContent = '连接状态：' + pc.connectionState;
+        };
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        statusEl.textContent = '连接 MediaMTX…';
+
+        const res = await fetch(`http://${host}:8889/screen/webrtc/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/sdp'
+            },
+            body: offer.sdp
+        });
+
+        const answerSDP = await res.text();
+        await pc.setRemoteDescription({
+            type: 'answer',
+            sdp: answerSDP
+        });
+
+        statusEl.textContent = `正在共享（用户：${user}）`;
+
+    } catch (err) {
+        console.error(err);
+        statusEl.textContent = '错误：' + err.message;
     }
-
-    el.localVideo.srcObject = localStream;
-    el.startBtn.disabled = true; el.stopBtn.disabled = false; el.toggleMic.disabled = false; el.publishBtn.disabled = false;
-    setStatus('本地预览中（'+(el.sourceType.value==='screen'?'屏幕共享':'摄像头')+'）');
-    await enumerateDevices();
-    log('本地预览启动: '+el.sourceType.value);
-  }catch(e){ log('startPreview 失败: '+e); setStatus('无法获取媒体源（浏览器权限/安全策略）'); }
-}
-
-function stopPreview(){
-  if(!localStream) return;
-  for(const t of localStream.getTracks()) t.stop();
-  el.localVideo.srcObject = null; localStream = null;
-  el.startBtn.disabled = false; el.stopBtn.disabled = true; el.toggleMic.disabled = true; el.publishBtn.disabled = true;
-  setStatus('已停止预览');
-  log('本地预览停止');
-}
-
-function toggleMic(){
-  if(!localStream) return;
-  for(const t of localStream.getAudioTracks()) t.enabled = !t.enabled;
-  isMicMuted = !isMicMuted;
-  el.toggleMic.textContent = isMicMuted ? '麦克风: 已静音' : '麦克风: 开启';
-}
-
-// ===== WHIP 发布（屏幕共享或摄像头流） =====
-async function publishToWhip(whipUrl){
-  if(!localStream){ log('请先启动本地预览'); return; }
-  if(pc) { log('已有活动 PeerConnection，先停止'); stopPublish(); }
-
-  pc = new RTCPeerConnection({ iceServers: [ { urls: 'stun:stun.l.google.com:19302' } ] });
-  for(const track of localStream.getTracks()) pc.addTrack(track, localStream);
-
-  pc.onicegatheringstatechange = ()=>{ log('iceGatheringState: '+pc.iceGatheringState); };
-  pc.onconnectionstatechange = ()=>{ log('PC state: '+pc.connectionState); setStatus('PC: '+pc.connectionState); if(pc.connectionState==='failed' || pc.connectionState==='disconnected') scheduleReconnect(); };
-
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-
-  await Promise.race([
-    new Promise(resolve=>{ if(pc.iceGatheringState==='complete') resolve(); else pc.onicegatheringstatechange = ()=>{ if(pc.iceGatheringState==='complete') resolve(); }; }),
-    new Promise(resolve=>setTimeout(resolve,3000))
-  ]);
-
-  const sdp = pc.localDescription.sdp;
-  setStatus('向 WHIP 服务器 POST SDP...');
-  log('POST SDP 到 '+whipUrl);
-  try{
-    const res = await fetch(whipUrl, { method:'POST', headers: { 'Content-Type':'application/sdp' }, body: sdp });
-    if(res.status === 201 || res.status === 200){
-      publishResourceUrl = res.headers.get('Location') || whipUrl;
-      publishEtag = res.headers.get('ETag') || null;
-      const text = await res.text();
-      if(text){ await pc.setRemoteDescription({ type:'answer', sdp: text }); log('设置远端 Answer'); }
-      el.publishBtn.disabled = true; el.stopPublishBtn.disabled = false; setStatus('推流中（已与 WHIP 建立会话）'); log('WHIP 发布成功，资源 URL: '+publishResourceUrl); reconnectAttempts=0; startStatsTimer(); return;
-    }else{ const body = await res.text(); log('WHIP POST 返回错误: '+res.status+' '+res.statusText+' body:'+body); scheduleReconnect(); }
-  }catch(e){ log('WHIP POST 失败: '+e); scheduleReconnect(); }
-}
-
-async function stopPublish(){
-  if(pc){ try{ pc.close(); }catch(e){} pc=null; }
-  if(publishResourceUrl){ try{ await fetch(publishResourceUrl, { method:'DELETE' }); log('已 DELETE WHIP session: '+publishResourceUrl); }catch(e){ log('DELETE 失败: '+e); } }
-  publishResourceUrl=null; publishEtag=null; el.publishBtn.disabled=false; el.stopPublishBtn.disabled=true; setStatus('未推流'); stopStatsTimer();
-}
-
-// ===== 重连策略 =====
-function scheduleReconnect(){ if(reconnectTimer) return; reconnectAttempts++; const delay=Math.min(30000,1000*Math.pow(2,Math.min(6,reconnectAttempts))); setStatus('断开，'+delay/1000+'s 后重试（第 '+reconnectAttempts+' 次）'); log(' scheduleReconnect delay='+delay+'ms'); reconnectTimer=setTimeout(async ()=>{ reconnectTimer=null; if(el.whipUrl.value) await publishToWhip(el.whipUrl.value); }, delay); }
-
-// ===== 统计 =====
-function startStatsTimer(){ stopStatsTimer(); statsTimer=setInterval(async ()=>{ if(!pc) return; try{ const s=await pc.getStats(); let out=''; s.forEach(r=>{ if(r.type==='outbound-rtp' && r.kind==='video') out+=`视频 bytesSent=${r.bytesSent} packetsSent=${r.packetsSent}
-`; }); el.stats.textContent = out || '无 outbound-rtp'; }catch(e){ el.stats.textContent='获取 stats 失败: '+e; } },2000); }
-function stopStatsTimer(){ if(statsTimer) clearInterval(statsTimer); statsTimer=null; el.stats.textContent='无'; }
-
-// ===== 本地设置保存/加载（含来源类型） =====
-function saveSettings(){ const obj={ whipUrl:el.whipUrl.value, sourceType:el.sourceType.value, resolution:el.resolution.value, framerate:el.framerate.value, bitrate:el.bitrate.value, audioDevice:el.audioSelect.value, videoDevice:el.videoSelect.value }; localStorage.setItem(savedSettingsKey, JSON.stringify(obj)); log('已保存设置'); }
-function loadSettings(){ const s=localStorage.getItem(savedSettingsKey); if(!s){ log('无本地设置'); return;} try{ const obj=JSON.parse(s); el.whipUrl.value=obj.whipUrl||''; el.sourceType.value=obj.sourceType||el.sourceType.value; el.resolution.value=obj.resolution||el.resolution.value; el.framerate.value=obj.framerate||el.framerate.value; el.bitrate.value=obj.bitrate||el.bitrate.value; setTimeout(()=>{ if(obj.videoDevice) try{ el.videoSelect.value=obj.videoDevice }catch(e){} if(obj.audioDevice) try{ el.audioSelect.value=obj.audioDevice }catch(e){} },500); log('已加载本地设置'); }catch(e){ log('加载设置失败: '+e); } }
-function resetSettings(){ localStorage.removeItem(savedSettingsKey); log('已重置本地设置'); }
-
-// ===== 事件绑定 =====
-el.startBtn.addEventListener('click', startPreview); el.stopBtn.addEventListener('click', stopPreview); el.toggleMic.addEventListener('click', toggleMic);
-el.publishBtn.addEventListener('click', ()=>{ if(!el.whipUrl.value){ log('请输入 WHIP URL'); return;} publishToWhip(el.whipUrl.value); }); el.stopPublishBtn.addEventListener('click', stopPublish);
-el.saveSettings.addEventListener('click', saveSettings); el.loadSettings.addEventListener('click', loadSettings); el.resetSettings.addEventListener('click', resetSettings);
-
-// 页面初始化
-(async function init(){ await enumerateDevices(); loadSettings(); setStatus('就绪'); log('页面初始化完成 - 默认来源: 屏幕共享（可在 UI 中切换）'); })();
+};
 </script>
 </body>
 </html>
