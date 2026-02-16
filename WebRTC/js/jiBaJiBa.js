@@ -45,45 +45,25 @@ class JiBaJiBaPlayer {
         this.themeDropdown = document.getElementById('themeDropdown');
         this.themeIcon = document.getElementById('themeIcon');
         
-        const savedTheme = localStorage.getItem('jibajiba_theme') || 'auto';
-        this.currentTheme = savedTheme;
-        
-        if (savedTheme === 'auto') {
-            this._applySystemTheme();
-        } else {
-            this._applyTheme(savedTheme);
-        }
+        this.currentTheme = window.ThemeManager ? window.ThemeManager.getTheme() : 'auto';
         this._updateThemeIcon();
-        
-        if (window.matchMedia) {
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-                if (this.currentTheme === 'auto') {
-                    this._applySystemTheme();
-                }
-            });
+        this._updateFavicon(this._getEffectiveTheme());
+    }
+
+    _getEffectiveTheme() {
+        if (this.currentTheme === 'auto') {
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
+        return this.currentTheme;
     }
 
     setTheme(theme) {
         this.currentTheme = theme;
-        localStorage.setItem('jibajiba_theme', theme);
-        
-        if (theme === 'auto') {
-            this._applySystemTheme();
-        } else {
-            this._applyTheme(theme);
+        if (window.ThemeManager) {
+            window.ThemeManager.setTheme(theme);
         }
-        
         this._updateThemeOptions();
-    }
-
-    _applyTheme(theme) {
-        if (theme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-        }
-        this._updateFavicon(theme);
+        this._updateFavicon(this._getEffectiveTheme());
     }
 
     _updateFavicon(theme) {
@@ -97,11 +77,6 @@ class JiBaJiBaPlayer {
         
         const svg = icons[theme] || icons.dark;
         favicon.href = `data:image/svg+xml,${svg}`;
-    }
-
-    _applySystemTheme() {
-        const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        this._applyTheme(isDark ? 'dark' : 'light');
     }
 
     _updateThemeOptions() {

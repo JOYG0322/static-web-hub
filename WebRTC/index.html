@@ -3,110 +3,303 @@
 <head>
 <meta charset="UTF-8">
 <title>WebRTC 网页播放器</title>
-<link rel="icon" type="image/png" href="../assets/icon.png">
+<link rel="icon" type="image/svg+xml" id="favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23FFF' d='M96.7 270.3C49 360.7 10 435 10 435.3c0 .4 16.5.6 36.6.5l36.6-.3 50-94.5c27.5-52 51.5-97.4 53.4-101l3.5-6.5-.4 89.5-.4 89.5 15.8 11.8 15.8 11.7h192.4l15.8-11.7 15.8-11.8.1-147c0-88.9-.4-146.5-.9-146-.5.6-15.6 26.2-33.6 57l-32.6 55.9.1 58.8V350H257V106h-73.5z'/><path fill='maroon' d='M370.3 107.2c-.5.7-24.2 41.4-52.7 90.5l-51.7 89.1-.2 26.6-.2 26.6 21.7-.2 21.7-.3 67.4-116 67.4-116-15.6-.6c-29.6-1.2-56.8-1-57.8.3'/></svg>">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-:root{
-  --bg-dark:#1a1a1a; /* 深色背景 */
-  --bg-card:#2c2c2c; /* 卡片背景 */
-  --bg-hover:#3e3e3e; /* 悬停背景 */
-  --text-main:#e0e0e0; /* 主文本颜色 */
-  --text-sub:#cccccc; /* 辅助文本颜色 */
-  --accent:#00a1d6; /* 强调色，金色 */
+:root {
+    --bg-dark: #1a1a1a;
+    --bg-card: #2c2c2c;
+    --bg-hover: #3e3e3e;
+    --text-main: #e0e0e0;
+    --text-sub: #cccccc;
+    --accent: #00a1d6;
 }
-*{box-sizing:border-box}
-body{
-  margin:0;
-  padding:20px;
-  background:var(--bg-dark);
-  color:var(--text-main);
-  font-family:"Segoe UI",sans-serif;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  min-height:100vh;
+
+[data-theme="light"] {
+    --bg-dark: #f5f5f5;
+    --bg-card: #ffffff;
+    --bg-hover: #e8e8e8;
+    --text-main: #1a1a1a;
+    --text-sub: #555555;
+    --accent: #00a1d6;
 }
-.header{
-  text-align:center;
-  margin-bottom:40px;
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 30px 20px 60px;
+    transition: background 0.3s, color 0.3s;
 }
-.header h1{
-  margin:0;
-  font-size:2rem;
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    max-width: 800px;
 }
-.header p{
-  color:var(--text-sub);
-  font-size:1rem;
-  margin-top:8px;
+
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
 }
-.time{
-  font-size:0.9rem;
-  color:var(--accent);
-  margin-top:5px;
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 600;
 }
-.button_card{
-  width:80%;
-  max-width:500px;
-  background:var(--bg-card);
-  color:var(--text-main);
-  border:none;
-  border-radius:12px;
-  padding:20px;
-  margin:15px 0;
-  text-align:center;
-  font-size:1.3rem;
-  cursor:pointer;
-  transition:0.2s;
-  box-shadow:0 0 10px rgba(0,0,0,0.4);
+
+.header p {
+    color: var(--text-sub);
+    font-size: 1rem;
+    margin-top: 8px;
+    line-height: 1.6;
 }
-.button_card:hover{
-  background:var(--bg-hover);
-  transform:translateY(-2px);
-  box-shadow:0 6px 20px rgba(0,0,0,0.5);
+
+.time {
+    font-size: 0.95rem;
+    color: var(--accent);
+    margin-top: 12px;
 }
-.button_card p{
-  font-size:0.9rem;
-  color:var(--text-sub);
-  margin-top:8px;
+
+.theme-switcher {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
 }
-@media(max-width:600px){
-  .button_card{font-size:1.1rem;padding:15px;}
+
+.theme-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg-card);
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.12s, box-shadow 0.12s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.theme-btn:hover {
+    background: var(--bg-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.theme-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.theme-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: var(--bg-card);
+    border-radius: 18px 0 18px 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    overflow: hidden;
+    display: none;
+    min-width: 130px;
+}
+
+.theme-dropdown.show { display: block; }
+
+.theme-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.theme-option svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.theme-option:hover { background: var(--bg-hover); }
+.theme-option.active { color: var(--accent); }
+
+.button_card {
+    width: 80%;
+    max-width: 500px;
+    background: var(--bg-card);
+    color: var(--text-main);
+    border: none;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 15px 0;
+    text-align: center;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.button_card:hover {
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+
+.button_card p {
+    font-size: 0.9rem;
+    color: var(--text-sub);
+    margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+    .button_card {
+        font-size: 1.1rem;
+        padding: 15px;
+    }
+    .theme-switcher {
+        top: 10px;
+        right: 10px;
+    }
 }
 </style>
 </head>
 <body>
 
+<div class="theme-switcher">
+    <button class="theme-btn" id="themeBtn" title="切换主题">
+        <span class="theme-icon" id="themeIcon">
+            <svg viewBox="0 0 16 16" fill="currentColor" id="themeSvg"></svg>
+        </span>
+    </button>
+    <div class="theme-dropdown" id="themeDropdown">
+        <div class="theme-option" data-theme="dark">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.2764 9.52325C12.5607 9.97755 11.7177 10.242 10.7812 10.242C8.11386 10.2419 5.95042 8.07997 5.9502 5.4129C5.9502 4.48129 6.21453 3.61072 6.67188 2.87286C4.30332 3.4658 2.54992 5.60846 2.5498 8.16094C2.5498 11.1712 4.99103 13.6102 8 13.6102C10.5383 13.6102 12.6709 11.8725 13.2764 9.52325ZM7.05078 5.4129C7.051 7.47225 8.72116 9.14231 10.7812 9.14239C11.9248 9.14239 12.887 8.63398 13.5781 7.8084C13.7266 7.63107 13.9701 7.56548 14.1875 7.64434C14.4049 7.7233 14.5497 7.9297 14.5498 8.16094C14.5498 11.7766 11.6161 14.7098 8 14.7098C4.38402 14.7098 1.4502 11.7792 1.4502 8.16094C1.45033 4.54323 4.3812 1.61016 8 1.61016C8.23027 1.61016 8.43585 1.75353 8.51562 1.96954C8.59536 2.18555 8.53241 2.4283 8.35742 2.57793C7.55573 3.26311 7.05078 4.27877 7.05078 5.4129Z"/></svg>
+            <span>黑暗模式</span>
+        </div>
+        <div class="theme-option" data-theme="light">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.3496 8C11.3496 6.14985 9.85015 4.65039 8 4.65039C6.14985 4.65039 4.65039 6.14985 4.65039 8C4.65039 9.85015 6.14985 11.3496 8 11.3496C9.85015 11.3496 11.3496 9.85015 11.3496 8ZM12.6504 8C12.6504 10.5681 10.5681 12.6504 8 12.6504C5.43188 12.6504 3.34961 10.5681 3.34961 8C3.34961 5.43188 5.43188 3.34961 8 3.34961C10.5681 3.34961 12.6504 5.43188 12.6504 8Z"/><path d="M8.65039 0.5V2.5H7.34961V0.5H8.65039Z"/><path d="M8.65039 13.5V15.5H7.34961V13.5H8.65039Z"/><path d="M3.15808 2.24035L4.57229 3.65456L3.6525 4.57435L2.23829 3.16014L3.15808 2.24035Z"/><path d="M12.3505 11.4327L13.7647 12.8469L12.8449 13.7667L11.4307 12.3525L12.3505 11.4327Z"/><path d="M2.24537 12.8469L3.65958 11.4327L4.57937 12.3525L3.16516 13.7667L2.24537 12.8469Z"/><path d="M11.4377 3.65455L12.852 2.24033L13.7718 3.16012L12.3575 4.57434L11.4377 3.65455Z"/><path d="M0.5 7.35461H2.5V8.6554H0.5L0.5 7.35461Z"/><path d="M13.5 7.35461H15.5V8.6554H13.5V7.35461Z"/></svg>
+            <span>白天模式</span>
+        </div>
+        <div class="theme-option" data-theme="auto">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.1665 13.5811V14.7803H3.66651V13.5811H12.1665Z"/><path d="M13.4453 7.02379C13.4453 6.04702 13.4452 5.3616 13.3887 4.83434C13.3333 4.31828 13.2302 4.02378 13.0723 3.80309C12.9446 3.62475 12.7877 3.46883 12.6094 3.34117C12.3887 3.18328 12.0942 3.08007 11.5781 3.02477C11.0508 2.96829 10.3655 2.96715 9.38867 2.96715H6.61035C5.63359 2.96715 4.94816 2.96827 4.4209 3.02477C3.90486 3.0801 3.61034 3.18321 3.38965 3.34117C3.21143 3.46878 3.05534 3.62487 2.92774 3.80309C2.76977 4.02377 2.66667 4.3183 2.61133 4.83434C2.55483 5.3616 2.55371 6.04702 2.55371 7.02379C2.55371 8.0006 2.55485 8.68596 2.61133 9.21324C2.66663 9.72936 2.76983 10.0238 2.92774 10.2445C3.0554 10.4228 3.21131 10.5797 3.38965 10.7074C3.61034 10.8654 3.90484 10.9685 4.4209 11.0238C4.94816 11.0803 5.63359 11.0804 6.61035 11.0804H9.38867C10.3654 11.0804 11.0508 11.0803 11.5781 11.0238C12.0941 10.9685 12.3887 10.8652 12.6094 10.7074C12.7877 10.5797 12.9446 10.4229 13.0723 10.2445C13.2301 10.0238 13.3334 9.72927 13.3887 9.21324C13.4452 8.68596 13.4453 8.00058 13.4453 7.02379ZM14.6455 7.02379C14.6455 7.97428 14.646 8.73509 14.5811 9.34117C14.5149 9.95828 14.3756 10.4858 14.0479 10.9437C13.8436 11.229 13.5938 11.4788 13.3086 11.683C12.8507 12.0108 12.3232 12.15 11.7061 12.2162C11.1 12.2811 10.3391 12.2806 9.38867 12.2806H6.61035C5.66018 12.2806 4.89991 12.2811 4.29395 12.2162C3.67684 12.15 3.14935 12.0108 2.69141 11.683C2.40613 11.4788 2.15639 11.229 1.95215 10.9437C1.62436 10.4858 1.4841 9.95828 1.41797 9.34117C1.35305 8.73511 1.35449 7.97424 1.35449 7.02379C1.35449 6.07366 1.35308 5.31333 1.41797 4.70738C1.4841 4.09028 1.62436 3.56279 1.95215 3.10485C2.15638 2.81956 2.40613 2.56982 2.69141 2.36559C3.14935 2.03779 3.67684 1.89753 4.29395 1.83141C4.8999 1.76652 5.66022 1.76793 6.61035 1.76793H9.38867C10.3391 1.76793 11.1 1.76649 11.7061 1.83141C12.3232 1.89753 12.8507 2.03779 13.3086 2.36559C13.5939 2.56982 13.8436 2.81957 14.0479 3.10485C14.3756 3.56279 14.5149 4.09028 14.5811 4.70738C14.646 5.31335 14.6455 6.07362 14.6455 7.02379Z"/></svg>
+            <span>跟随系统</span>
+        </div>
+    </div>
+</div>
+
 <div class="header">
-  <h1>WebRTC 网页播放器</h1>
-  <br>
-  <p>本页面基于 SRS（Simple Realtime Server）WebRTC 实现，可在浏览器环境下提供低延迟、高兼容性的实时播放体验。</p>
-  <p>得益于 WebRTC 已成为正式 RFC 标准，主流现代浏览器均可在无需插件的前提下完成媒体流的实时传输与观看。</p>
-  <p>常见适用场景为内部低延迟直播、远程监控、视频会议与开发/测试环境。</p>
-  <p>在网络条件受限时，可启用码率自适应或降级策略以保持基本连通性和可用性，或者尝试更换编码器，推荐使用 Opus。
-  <div class="time" id="timeDisplay"></div>
+    <div class="header-top">
+        <svg id="logoSvg" viewBox="0 0 512 512" width="40" height="40" style="border-radius: 8px;"><path fill="#FFF" d="M96.7 270.3C49 360.7 10 435 10 435.3c0 .4 16.5.6 36.6.5l36.6-.3 50-94.5c27.5-52 51.5-97.4 53.4-101l3.5-6.5-.4 89.5-.4 89.5 15.8 11.8 15.8 11.7h192.4l15.8-11.7 15.8-11.8.1-147c0-88.9-.4-146.5-.9-146-.5.6-15.6 26.2-33.6 57l-32.6 55.9.1 58.8V350H257V106h-73.5z"/><path fill="maroon" d="M370.3 107.2c-.5.7-24.2 41.4-52.7 90.5l-51.7 89.1-.2 26.6-.2 26.6 21.7-.2 21.7-.3 67.4-116 67.4-116-15.6-.6c-29.6-1.2-56.8-1-57.8.3"/></svg>
+        <h1>WebRTC 网页播放器</h1>
+    </div>
+    <p>本页面基于 SRS（Simple Realtime Server）WebRTC 实现，可在浏览器环境下提供低延迟、高兼容性的实时播放体验。</p>
+    <p>得益于 WebRTC 已成为正式 RFC 标准，主流现代浏览器均可在无需插件的前提下完成媒体流的实时传输与观看。</p>
+    <p>常见适用场景为内部低延迟直播、远程监控、视频会议与开发/测试环境。</p>
+    <p>在网络条件受限时，可启用码率自适应或降级策略以保持基本连通性和可用性，或者尝试更换编码器，推荐使用 Opus。</p>
+    <div class="time" id="timeDisplay"></div>
 </div>
 
 <button class="button_card" onclick="location.href='https://10.126.126.15/WebRTC/deertube'">
-  deertube播放器
-  <p>CMHH编写的最初更新版本</p>
+    deertube播放器
+    <p>CMHH编写的最初更新版本</p>
 </button>
 
 <button class="button_card" onclick="location.href='https://10.126.126.15/WebRTC/jiBaJiBa'">
-  jiBaJiBa播放器
-  <p>AI协助生成的分支版本播放器，适用于新功能测试和尝鲜</p>
+    jiBaJiBa播放器
+    <p>AI协助生成的分支版本播放器，适用于新功能测试和尝鲜</p>
 </button>
 
+<script src="../assets/js/theme-manager.js"></script>
 <script>
-// 动态显示当前时间
-function updateTime(){
+function updateTime() {
     const now = new Date();
-    const h = String(now.getHours()).padStart(2,'0');
-    const m = String(now.getMinutes()).padStart(2,'0');
-    const s = String(now.getSeconds()).padStart(2,'0');
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
     document.getElementById('timeDisplay').textContent = `当前时间: ${h}:${m}:${s}`;
 }
-setInterval(updateTime,1000);
+setInterval(updateTime, 1000);
 updateTime();
+
+const themeBtn = document.getElementById('themeBtn');
+const themeDropdown = document.getElementById('themeDropdown');
+const themeSvg = document.getElementById('themeSvg');
+
+const themeIcons = {
+    dark: '<path d="M13.2764 9.52325C12.5607 9.97755 11.7177 10.242 10.7812 10.242C8.11386 10.2419 5.95042 8.07997 5.9502 5.4129C5.9502 4.48129 6.21453 3.61072 6.67188 2.87286C4.30332 3.4658 2.54992 5.60846 2.5498 8.16094C2.5498 11.1712 4.99103 13.6102 8 13.6102C10.5383 13.6102 12.6709 11.8725 13.2764 9.52325ZM7.05078 5.4129C7.051 7.47225 8.72116 9.14231 10.7812 9.14239C11.9248 9.14239 12.887 8.63398 13.5781 7.8084C13.7266 7.63107 13.9701 7.56548 14.1875 7.64434C14.4049 7.7233 14.5497 7.9297 14.5498 8.16094C14.5498 11.7766 11.6161 14.7098 8 14.7098C4.38402 14.7098 1.4502 11.7792 1.4502 8.16094C1.45033 4.54323 4.3812 1.61016 8 1.61016C8.23027 1.61016 8.43585 1.75353 8.51562 1.96954C8.59536 2.18555 8.53241 2.4283 8.35742 2.57793C7.55573 3.26311 7.05078 4.27877 7.05078 5.4129Z"/>',
+    light: '<path d="M11.3496 8C11.3496 6.14985 9.85015 4.65039 8 4.65039C6.14985 4.65039 4.65039 6.14985 4.65039 8C4.65039 9.85015 6.14985 11.3496 8 11.3496C9.85015 11.3496 11.3496 9.85015 11.3496 8ZM12.6504 8C12.6504 10.5681 10.5681 12.6504 8 12.6504C5.43188 12.6504 3.34961 10.5681 3.34961 8C3.34961 5.43188 5.43188 3.34961 8 3.34961C10.5681 3.34961 12.6504 5.43188 12.6504 8Z"/><path d="M8.65039 0.5V2.5H7.34961V0.5H8.65039Z"/><path d="M8.65039 13.5V15.5H7.34961V13.5H8.65039Z"/><path d="M3.15808 2.24035L4.57229 3.65456L3.6525 4.57435L2.23829 3.16014L3.15808 2.24035Z"/><path d="M12.3505 11.4327L13.7647 12.8469L12.8449 13.7667L11.4307 12.3525L12.3505 11.4327Z"/><path d="M2.24537 12.8469L3.65958 11.4327L4.57937 12.3525L3.16516 13.7667L2.24537 12.8469Z"/><path d="M11.4377 3.65455L12.852 2.24033L13.7718 3.16012L12.3575 4.57434L11.4377 3.65455Z"/><path d="M0.5 7.35461H2.5V8.6554H0.5L0.5 7.35461Z"/><path d="M13.5 7.35461H15.5V8.6554H13.5V7.35461Z"/>',
+    auto: '<path d="M12.1665 13.5811V14.7803H3.66651V13.5811H12.1665Z"/><path d="M13.4453 7.02379C13.4453 6.04702 13.4452 5.3616 13.3887 4.83434C13.3333 4.31828 13.2302 4.02378 13.0723 3.80309C12.9446 3.62475 12.7877 3.46883 12.6094 3.34117C12.3887 3.18328 12.0942 3.08007 11.5781 3.02477C11.0508 2.96829 10.3655 2.96715 9.38867 2.96715H6.61035C5.63359 2.96715 4.94816 2.96827 4.4209 3.02477C3.90486 3.0801 3.61034 3.18321 3.38965 3.34117C3.21143 3.46878 3.05534 3.62487 2.92774 3.80309C2.76977 4.02377 2.66667 4.3183 2.61133 4.83434C2.55483 5.3616 2.55371 6.04702 2.55371 7.02379C2.55371 8.0006 2.55485 8.68596 2.61133 9.21324C2.66663 9.72936 2.76983 10.0238 2.92774 10.2445C3.0554 10.4228 3.21131 10.5797 3.38965 10.7074C3.61034 10.8654 3.90484 10.9685 4.4209 11.0238C4.94816 11.0803 5.63359 11.0804 6.61035 11.0804H9.38867C10.3654 11.0804 11.0508 11.0803 11.5781 11.0238C12.0941 10.9685 12.3887 10.8652 12.6094 10.7074C12.7877 10.5797 12.9446 10.4229 13.0723 10.2445C13.2301 10.0238 13.3334 9.72927 13.3887 9.21324C13.4452 8.68596 13.4453 8.00058 13.4453 7.02379ZM14.6455 7.02379C14.6455 7.97428 14.646 8.73509 14.5811 9.34117C14.5149 9.95828 14.3756 10.4858 14.0479 10.9437C13.8436 11.229 13.5938 11.4788 13.3086 11.683C12.8507 12.0108 12.3232 12.15 11.7061 12.2162C11.1 12.2811 10.3391 12.2806 9.38867 12.2806H6.61035C5.66018 12.2806 4.89991 12.2811 4.29395 12.2162C3.67684 12.15 3.14935 12.0108 2.69141 11.683C2.40613 11.4788 2.15639 11.229 1.95215 10.9437C1.62436 10.4858 1.4841 9.95828 1.41797 9.34117C1.35305 8.73511 1.35449 7.97424 1.35449 7.02379C1.35449 6.07366 1.35308 5.31333 1.41797 4.70738C1.4841 4.09028 1.62436 3.56279 1.95215 3.10485C2.15638 2.81956 2.40613 2.56982 2.69141 2.36559C3.14935 2.03779 3.67684 1.89753 4.29395 1.83141C4.8999 1.76652 5.66022 1.76793 6.61035 1.76793H9.38867C10.3391 1.76793 11.1 1.76649 11.7061 1.83141C12.3232 1.89753 12.8507 2.03779 13.3086 2.36559C13.5939 2.56982 13.8436 2.81957 14.0479 3.10485C14.3756 3.56279 14.5149 4.09028 14.5811 4.70738C14.646 5.31335 14.6455 6.07362 14.6455 7.02379Z"/>'
+};
+
+function updateThemeUI() {
+    const theme = window.ThemeManager ? window.ThemeManager.getTheme() : 'auto';
+    themeSvg.innerHTML = themeIcons[theme] || themeIcons.auto;
+    
+    document.querySelectorAll('.theme-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.theme === theme);
+    });
+    
+    updateFavicon();
+    updateLogo();
+}
+
+function updateFavicon() {
+    const favicon = document.getElementById('favicon');
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    
+    const icons = {
+        dark: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23FFF' d='M96.7 270.3C49 360.7 10 435 10 435.3c0 .4 16.5.6 36.6.5l36.6-.3 50-94.5c27.5-52 51.5-97.4 53.4-101l3.5-6.5-.4 89.5-.4 89.5 15.8 11.8 15.8 11.7h192.4l15.8-11.7 15.8-11.8.1-147c0-88.9-.4-146.5-.9-146-.5.6-15.6 26.2-33.6 57l-32.6 55.9.1 58.8V350H257V106h-73.5z'/><path fill='maroon' d='M370.3 107.2c-.5.7-24.2 41.4-52.7 90.5l-51.7 89.1-.2 26.6-.2 26.6 21.7-.2 21.7-.3 67.4-116 67.4-116-15.6-.6c-29.6-1.2-56.8-1-57.8.3'/></svg>",
+        light: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M96.7 270.3C49 360.7 10 435 10 435.3c0 .4 16.5.6 36.6.5l36.6-.3 50-94.5c27.5-52 51.5-97.4 53.4-101l3.5-6.5-.4 89.5-.4 89.5 15.8 11.8 15.8 11.7h192.4l15.8-11.7 15.8-11.8.1-147c0-88.9-.4-146.5-.9-146-.5.6-15.6 26.2-33.6 57l-32.6 55.9.1 58.8V350H257V106h-73.5z'/><path fill='maroon' d='M370.3 107.2c-.5.7-24.2 41.4-52.7 90.5l-51.7 89.1-.2 26.6-.2 26.6 21.7-.2 21.7-.3 67.4-116 67.4-116-15.6-.6c-29.6-1.2-56.8-1-57.8.3'/></svg>"
+    };
+    
+    favicon.href = `data:image/svg+xml,${isLight ? icons.light : icons.dark}`;
+}
+
+function updateLogo() {
+    const logo = document.getElementById('logoSvg');
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const path = logo.querySelector('path:first-child');
+    if (path) {
+        path.setAttribute('fill', isLight ? '#1a1a1a' : '#FFF');
+    }
+}
+
+themeBtn.addEventListener('click', () => {
+    themeDropdown.classList.toggle('show');
+});
+
+document.querySelectorAll('.theme-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+        const theme = opt.dataset.theme;
+        if (window.ThemeManager) {
+            window.ThemeManager.setTheme(theme);
+        }
+        updateThemeUI();
+        themeDropdown.classList.remove('show');
+    });
+});
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.theme-switcher')) {
+        themeDropdown.classList.remove('show');
+    }
+});
+
+updateThemeUI();
 </script>
 
 </body>
