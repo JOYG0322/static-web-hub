@@ -18,12 +18,12 @@
 * { box-sizing: border-box; }
 body {
     margin: 0;
-    padding: 15px;
+    padding: 10px;
     background: var(--bg-dark);
     color: var(--text-main);
     font-family: "Segoe UI", sans-serif;
 }
-.container { display: flex; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+.container { display: flex; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; }
 .title_ { display: flex; align-items: center; font-size: 26px; font-weight: bold; }
 .title_ img, .title_ svg { height: 38px; margin-right: 10px; border-radius: 8px; transition: transform 0.2s ease; }
 .title_ img:hover, .title_ svg:hover { transform: scale(1.15); cursor: pointer; }

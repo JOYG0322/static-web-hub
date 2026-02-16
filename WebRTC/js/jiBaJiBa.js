@@ -263,7 +263,7 @@ class JiBaJiBaPlayer {
 
     addManualChannel(name, url) {
         const historyContainer = this.historyContainer;
-        const maxHistory = 6;
+        const maxHistory = 8;
         
         while (historyContainer.children.length >= maxHistory) {
             historyContainer.removeChild(historyContainer.lastChild);
