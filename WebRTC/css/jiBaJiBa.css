@@ -164,7 +164,7 @@ video { width: 100%; flex: 1; border-radius: 10px; background: #000; }
 .section-title {
     font-size: 14px;
     color: var(--text-main);
-    margin: 10px 0 4px 0;
+    margin: 0 0 4px 0;
     font-weight: bold;
     padding-left: 6px;
 }
@@ -172,7 +172,7 @@ video { width: 100%; flex: 1; border-radius: 10px; background: #000; }
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 10px 0 4px 0;
+    margin: 6px 0 4px 0;
 }
 .section-title-row .section-title {
     margin: 0;
