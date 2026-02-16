@@ -11,11 +11,23 @@ class JiBaJiBaPlayer {
         this.reconnectDelay = 1000;
         this.maxReconnectDelay = 30000;
         this.reconnectTimer = null;
+        this.audioVisualInterval = null;
         this.isManualDisconnect = false;
         this.isConnected = false;
 
         this.video = document.getElementById('remoteVideo');
         this.statusEl = document.getElementById('status');
+        this.qualityIndicator = document.getElementById('qualityIndicator');
+        this.qualityText = this.qualityIndicator?.querySelector('.quality-text');
+        this.audioStatus = document.getElementById('audioStatus');
+        this.audioJitter = document.getElementById('audioJitter');
+        this.audioSampleRate = document.getElementById('audioSampleRate');
+        this.audioBar = document.getElementById('audioBar');
+        this.audioBarFill = document.getElementById('audioBarFill');
+        this.audioWave = document.getElementById('audioWave');
+        this.audioWaveBars = this.audioWave?.querySelectorAll('.wave-bar');
+        this.audioVisualSelect = document.getElementById('audioVisualSelect');
+        this.audioVisualMode = 'none';
         this.fullscreenBtn = document.getElementById('fullscreenBtn');
         this.roomInput = document.getElementById('roomInput');
         this.presetContainer = document.getElementById('presetContainer');
@@ -131,6 +143,12 @@ class JiBaJiBaPlayer {
         const clearHistoryBtn = document.getElementById('clearHistoryBtn');
         if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', () => this.clearHistory());
 
+        const refreshPresetBtn = document.getElementById('refreshPresetBtn');
+        if (refreshPresetBtn) refreshPresetBtn.addEventListener('click', () => this.refreshPresetStatus());
+
+        const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
+        if (refreshHistoryBtn) refreshHistoryBtn.addEventListener('click', () => this.refreshHistoryStatus());
+
         if (this.themeBtn) {
             this.themeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -163,6 +181,13 @@ class JiBaJiBaPlayer {
                 }
                 this._loadPresetChannels();
                 this.updateStatus(`已切换到服务器: ${this.currentServer}`);
+            });
+        }
+
+        if (this.audioVisualSelect) {
+            this.audioVisualSelect.addEventListener('change', (e) => {
+                this.audioVisualMode = e.target.value;
+                this._updateAudioVisualDisplay();
             });
         }
 
@@ -388,6 +413,52 @@ class JiBaJiBaPlayer {
         this.updateStatus('历史记录已清空');
     }
 
+    async refreshPresetStatus() {
+        if (!window.StreamStatusManager) return;
+        await window.StreamStatusManager.fetchStatus();
+        const status = window.StreamStatusManager.getAllStatus();
+        this._updatePresetStatusIndicators(status);
+    }
+
+    _updatePresetStatusIndicators(status) {
+        const indicators = this.presetContainer?.querySelectorAll('.status-indicator[streamname]');
+        if (!indicators) return;
+        indicators.forEach(indicator => {
+            const streamName = indicator.getAttribute('streamname');
+            const streamStatus = status && status[streamName];
+            if (streamStatus && streamStatus.active) {
+                indicator.style.background = '#00aa00';
+                indicator.style.boxShadow = '0 0 20px #00ff00';
+            } else {
+                indicator.style.background = '#ff0000';
+                indicator.style.boxShadow = '0 0 20px #ff0000';
+            }
+        });
+    }
+
+    async refreshHistoryStatus() {
+        if (!window.StreamStatusManager) return;
+        await window.StreamStatusManager.fetchStatus();
+        const status = window.StreamStatusManager.getAllStatus();
+        this._updateHistoryStatusIndicators(status);
+    }
+
+    _updateHistoryStatusIndicators(status) {
+        const indicators = this.historyContainer?.querySelectorAll('.status-indicator[streamname]');
+        if (!indicators) return;
+        indicators.forEach(indicator => {
+            const streamName = indicator.getAttribute('streamname');
+            const streamStatus = status && status[streamName];
+            if (streamStatus && streamStatus.active) {
+                indicator.style.background = '#00aa00';
+                indicator.style.boxShadow = '0 0 20px #00ff00';
+            } else {
+                indicator.style.background = '#ff0000';
+                indicator.style.boxShadow = '0 0 20px #ff0000';
+            }
+        });
+    }
+
     refresh() {
         if (this.currentUrl) this.connectStream(this.currentUrl);
     }
@@ -410,14 +481,36 @@ class JiBaJiBaPlayer {
             this.pc = null;
         }
         if (this.statsInterval) { clearInterval(this.statsInterval); this.statsInterval = null; }
+        if (this.audioVisualInterval) { clearInterval(this.audioVisualInterval); this.audioVisualInterval = null; }
         try {
             this.video.srcObject = null;
             this.video.src = '';
             this.video.load();
         } catch (e) {}
         this.updateStatus('已断开连接');
+        this._resetQualityIndicator();
+        this._resetAudioStats();
         window._lastBytes = 0;
         if (this.isFullscreen) this.toggleFullscreen();
+    }
+
+    _resetQualityIndicator() {
+        if (this.qualityIndicator) {
+            this.qualityIndicator.classList.remove('quality-good', 'quality-medium', 'quality-poor');
+        }
+        if (this.qualityText) {
+            this.qualityText.textContent = '--';
+        }
+    }
+
+    _resetAudioStats() {
+        if (this.audioStatus) this.audioStatus.textContent = '音频: --';
+        if (this.audioJitter) this.audioJitter.textContent = '抖动: --';
+        if (this.audioSampleRate) this.audioSampleRate.textContent = '采样率: --';
+        if (this.audioBarFill) this.audioBarFill.style.width = '0%';
+        if (this.audioWaveBars) {
+            this.audioWaveBars.forEach(bar => bar.style.height = '2px');
+        }
     }
 
     async connectStream(url) {
@@ -469,6 +562,7 @@ class JiBaJiBaPlayer {
             await this.pc.setRemoteDescription({ type: 'answer', sdp: answer });
 
             this._startStats();
+            this._startAudioVisual();
         } catch (e) {
             console.error('连接失败', e);
             this.updateStatus(`连接失败: ${e.message}`);
@@ -482,7 +576,8 @@ class JiBaJiBaPlayer {
             if (!this.pc || this.pc.connectionState !== 'connected') return;
             try {
                 const stats = await this.pc.getStats();
-                let fps = 0, bitrate = 0, rtt = 0, loss = 0;
+                let fps = 0, bitrate = 0, rtt = 0, loss = 0, jitter = 0, width = 0, height = 0, availableBitrate = 0;
+                let audioLevel = 0, audioJitter = 0, audioSampleRate = 0;
                 stats.forEach(r => {
                     if (r.type === 'inbound-rtp' && r.kind === 'video') {
                         if (r.framesPerSecond) fps = r.framesPerSecond;
@@ -494,9 +589,20 @@ class JiBaJiBaPlayer {
                             window._lastBytes = r.bytesReceived;
                             window._lastTime = r.timestamp;
                         }
+                        if (r.jitter) jitter = Math.round(r.jitter * 1000);
+                        if (r.frameWidth) width = r.frameWidth;
+                        if (r.frameHeight) height = r.frameHeight;
+                    }
+                    if (r.type === 'inbound-rtp' && r.kind === 'audio') {
+                        if (r.audioLevel !== undefined) audioLevel = r.audioLevel;
+                        if (r.jitter) audioJitter = Math.round(r.jitter * 1000);
+                    }
+                    if (r.type === 'codec' && r.kind === 'audio' && r.clockRate) {
+                        audioSampleRate = r.clockRate;
                     }
                     if (r.type === 'candidate-pair' && r.state === 'succeeded') {
                         if (r.currentRoundTripTime) rtt = Math.round(r.currentRoundTripTime * 1000);
+                        if (r.availableOutgoingBitrate) availableBitrate = Math.round(r.availableOutgoingBitrate / 1000);
                     }
                     if (r.type === 'inbound-rtp' && r.kind === 'video' && r.packetsLost !== undefined) {
                         const lost = r.packetsLost || 0;
@@ -504,9 +610,87 @@ class JiBaJiBaPlayer {
                         if (total > 0) loss = Math.round((lost / total) * 100);
                     }
                 });
-                this.updateStatus(`WebRTC · ${bitrate}kbps · ${fps}fps · RTT:${rtt}ms · 丢包:${loss}%`);
+                const resolution = width && height ? `${width}x${height}` : '--';
+                const jitterStr = jitter ? `${jitter}ms` : '--';
+                const bitrateStr = availableBitrate ? `${availableBitrate}kbps` : '--';
+                this.updateStatus(`${bitrate}kbps · ${fps}fps · ${resolution} · RTT:${rtt}ms · 抖动:${jitterStr} · 丢包:${loss}% · 带宽:${bitrateStr}`);
+                this._updateQualityIndicator(rtt, loss);
+                this._updateAudioInfo(audioJitter, audioSampleRate);
             } catch (e) {}
         }, 1000);
+    }
+
+    _startAudioVisual() {
+        if (this.audioVisualInterval) clearInterval(this.audioVisualInterval);
+        this.audioVisualInterval = setInterval(async () => {
+            if (!this.pc || this.pc.connectionState !== 'connected') return;
+            try {
+                const stats = await this.pc.getStats();
+                let audioLevel = 0;
+                stats.forEach(r => {
+                    if (r.type === 'inbound-rtp' && r.kind === 'audio' && r.audioLevel !== undefined) {
+                        audioLevel = r.audioLevel;
+                    }
+                });
+                this._updateAudioVisual(audioLevel);
+            } catch (e) {}
+        }, 200);
+    }
+
+    _updateQualityIndicator(rtt, loss) {
+        if (!this.qualityIndicator || !this.qualityText) return;
+        
+        this.qualityIndicator.classList.remove('quality-good', 'quality-medium', 'quality-poor');
+        
+        if (rtt > 1000 || loss > 50) {
+            this.qualityIndicator.classList.add('quality-poor');
+            this.qualityText.textContent = '连接质量差';
+        } else if (rtt > 400 || loss > 30) {
+            this.qualityIndicator.classList.add('quality-medium');
+            this.qualityText.textContent = '连接质量中';
+        } else {
+            this.qualityIndicator.classList.add('quality-good');
+            this.qualityText.textContent = '连接质量优';
+        }
+    }
+
+    _updateAudioInfo(jitter, sampleRate) {
+        if (this.audioJitter) {
+            this.audioJitter.textContent = `抖动: ${jitter ? jitter + 'ms' : '--'}`;
+        }
+        if (this.audioSampleRate) {
+            this.audioSampleRate.textContent = `采样率: ${sampleRate ? (sampleRate / 1000) + 'kHz' : '--'}`;
+        }
+    }
+
+    _updateAudioVisual(level) {
+        const percentage = Math.min(100, Math.round(level * 100));
+        
+        if (this.audioStatus) {
+            const statusText = level > 0.01 ? '正常' : (level > 0 ? '静音' : '--');
+            this.audioStatus.textContent = `音频: ${statusText}`;
+        }
+        
+        if (this.audioVisualMode === 'none') return;
+        
+        if (this.audioVisualMode === 'bar' && this.audioBarFill) {
+            this.audioBarFill.style.width = percentage + '%';
+        } else if (this.audioVisualMode === 'wave' && this.audioWaveBars) {
+            this.audioWaveBars.forEach((bar, i) => {
+                const randomFactor = 0.3 + Math.random() * 0.7;
+                const height = Math.max(2, percentage * randomFactor * 0.12);
+                bar.style.height = height + 'px';
+            });
+        }
+    }
+
+    _updateAudioVisualDisplay() {
+        if (this.audioBar) this.audioBar.style.display = this.audioVisualMode === 'bar' ? 'block' : 'none';
+        if (this.audioWave) this.audioWave.style.display = this.audioVisualMode === 'wave' ? 'flex' : 'none';
+        
+        if (this.audioVisualMode === 'wave' && this.audioWaveBars) {
+            this.audioWaveBars.forEach(bar => bar.style.height = '2px');
+        }
     }
 
     _waitForIceRecovery() {
@@ -688,15 +872,7 @@ class JiBaJiBaPlayer {
             
             const videoContainer = document.querySelector('.videoContainer');
             if (videoContainer && this.video.parentElement !== videoContainer) {
-                const statusEl = videoContainer.querySelector('.status');
-                const controlsEl = videoContainer.querySelector('.controls');
-                if (statusEl) {
-                    videoContainer.insertBefore(this.video, statusEl);
-                } else if (controlsEl) {
-                    videoContainer.insertBefore(this.video, controlsEl);
-                } else {
-                    videoContainer.insertBefore(this.video, videoContainer.firstChild);
-                }
+                videoContainer.insertBefore(this.video, videoContainer.firstChild);
             }
             this.video.style.width = '';
             this.video.style.height = '';

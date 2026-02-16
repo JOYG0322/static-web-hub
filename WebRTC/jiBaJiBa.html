@@ -36,7 +36,37 @@
     <div class="main_">
         <div class="videoContainer" aria-live="polite">
             <video id="remoteVideo" autoplay playsinline muted controls></video>
-            <div id="status" class="status">未连接</div>
+            <div class="status-row">
+                <div id="status" class="status">未连接</div>
+                <div id="qualityIndicator" class="quality-indicator">
+                    <span class="quality-dot"></span>
+                    <span class="quality-text">--</span>
+                </div>
+                <span class="status-divider">|</span>
+                <span id="audioStatus" class="audio-stat">音频: --</span>
+                <span id="audioJitter" class="audio-stat">抖动: --</span>
+                <span id="audioSampleRate" class="audio-stat">采样率: --</span>
+                <div class="audio-visual-inline">
+                    <div id="audioBar" class="audio-bar" style="display: none;">
+                        <div class="audio-bar-fill" id="audioBarFill"></div>
+                    </div>
+                    <div id="audioWave" class="audio-wave" style="display: none;">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                </div>
+                <select id="audioVisualSelect" class="audio-visual-select" title="音频可视化">
+                    <option value="none">无</option>
+                    <option value="bar">条形</option>
+                    <option value="wave">波形</option>
+                </select>
+            </div>
             <div class="controls" role="toolbar">
                 <button class="button_l" id="refreshBtn">刷新</button>
                 <button class="button_l" id="disconnectBtn">断开</button>
@@ -63,7 +93,10 @@
         </div>
 
         <div class="buttons" id="channelList">
-            <div class="section-title">预设频道</div>
+            <div class="section-title-row">
+                <div class="section-title">预设频道</div>
+                <button class="refresh-status-btn" id="refreshPresetBtn" title="刷新频道状态">刷新</button>
+            </div>
             <div id="presetContainer" aria-label="预设频道"></div>
             <div class="search_">
                 <input id="roomInput" type="text" placeholder="输入房间号" class="text_enter" aria-label="房间号">
@@ -71,6 +104,7 @@
             </div>
             <div class="section-title-row">
                 <div class="section-title">历史记录</div>
+                <button class="refresh-status-btn" id="refreshHistoryBtn" title="刷新历史状态">刷新</button>
                 <button class="clear-history-btn" id="clearHistoryBtn">全部删除</button>
             </div>
             <div id="historyContainer" aria-label="历史记录"></div>
