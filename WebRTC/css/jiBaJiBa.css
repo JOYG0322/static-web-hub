@@ -114,6 +114,7 @@ body {
 .videoContainer {
     flex: 3;
     min-width: 300px;
+    min-height: 0;
     background: var(--bg-card);
     border-radius: 10px;
     padding: 12px;
