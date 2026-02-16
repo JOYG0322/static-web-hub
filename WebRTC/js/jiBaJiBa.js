@@ -241,7 +241,7 @@ class JiBaJiBaPlayer {
         btn.type = 'button';
         btn.addEventListener('click', () => this.connectStream(url));
         btn.addEventListener('mousedown', () => btn.classList.add('pressed'));
-        document.addEventListener('mouseup', () => btn.classList.remove('pressed'));
+        btn.addEventListener('mouseup', () => btn.classList.remove('pressed'));
         btn.addEventListener('mouseleave', () => btn.classList.remove('pressed'));
 
         if (img) {
@@ -807,6 +807,7 @@ class JiBaJiBaPlayer {
         await this.pc.setRemoteDescription({ type: 'answer', sdp: answer });
 
         this._startStats();
+        this._startAudioVisual();
     }
 
     _cleanupPeerConnection() {
@@ -833,7 +834,7 @@ class JiBaJiBaPlayer {
             const videoWrapper = document.createElement('div');
             videoWrapper.style.cssText = 'width:100%;height:100%;display:flex;justify-content:center;align-items:center;';
             
-            this.video.style.display = '';
+            this.video.style.display = 'block';
             this.video.style.width = '100%';
             this.video.style.height = '100%';
             this.video.style.objectFit = 'contain';
