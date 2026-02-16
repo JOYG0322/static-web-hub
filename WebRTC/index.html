@@ -288,7 +288,6 @@ document.querySelectorAll('.theme-option').forEach(opt => {
         if (window.ThemeManager) {
             window.ThemeManager.setTheme(theme);
         }
-        updateThemeUI();
         themeDropdown.classList.remove('show');
     });
 });
@@ -298,6 +297,8 @@ document.addEventListener('click', (e) => {
         themeDropdown.classList.remove('show');
     }
 });
+
+window.addEventListener('themechange', updateThemeUI);
 
 updateThemeUI();
 </script>

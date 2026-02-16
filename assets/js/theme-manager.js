@@ -9,6 +9,7 @@
         setTheme(theme) {
             localStorage.setItem(THEME_KEY, theme);
             this.applyTheme(theme);
+            this._dispatchThemeChange(theme);
         },
         
         applyTheme(theme) {
@@ -32,6 +33,16 @@
             }
         },
         
+        _dispatchThemeChange(theme) {
+            window.dispatchEvent(new CustomEvent('themechange', { 
+                detail: { theme: theme } 
+            }));
+        },
+        
+        getCurrentAppliedTheme() {
+            return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+        },
+        
         init() {
             const theme = this.getTheme();
             this.applyTheme(theme);
@@ -40,9 +51,17 @@
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
                     if (this.getTheme() === 'auto') {
                         this.applySystemTheme();
+                        this._dispatchThemeChange('auto');
                     }
                 });
             }
+            
+            window.addEventListener('storage', (e) => {
+                if (e.key === THEME_KEY && e.newValue) {
+                    this.applyTheme(e.newValue);
+                    this._dispatchThemeChange(e.newValue);
+                }
+            });
         }
     };
     

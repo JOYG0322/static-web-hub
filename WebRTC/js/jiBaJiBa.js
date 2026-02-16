@@ -48,6 +48,12 @@ class JiBaJiBaPlayer {
         this.currentTheme = window.ThemeManager ? window.ThemeManager.getTheme() : 'auto';
         this._updateThemeIcon();
         this._updateFavicon(this._getEffectiveTheme());
+        
+        window.addEventListener('themechange', (e) => {
+            this.currentTheme = e.detail.theme;
+            this._updateThemeOptions();
+            this._updateFavicon(this._getEffectiveTheme());
+        });
     }
 
     _getEffectiveTheme() {
@@ -62,8 +68,6 @@ class JiBaJiBaPlayer {
         if (window.ThemeManager) {
             window.ThemeManager.setTheme(theme);
         }
-        this._updateThemeOptions();
-        this._updateFavicon(this._getEffectiveTheme());
     }
 
     _updateFavicon(theme) {
