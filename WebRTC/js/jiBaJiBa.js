@@ -5,7 +5,6 @@ class JiBaJiBaPlayer {
         this.statsInterval = null;
         this.isFullscreen = false;
         this.fullscreenTimeout = null;
-        this.currentProto = 'whep';
 
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
@@ -21,33 +20,26 @@ class JiBaJiBaPlayer {
         this.roomInput = document.getElementById('roomInput');
         this.presetContainer = document.getElementById('presetContainer');
         this.historyContainer = document.getElementById('historyContainer');
+        this.serverSelect = document.getElementById('serverSelect');
+        this.currentServer = this.serverSelect ? this.serverSelect.value : '10.126.126.15';
 
         this.presetChannels = [
-            { name: '[直播] JOYG', img: '../assets/joyg.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG' },
-            { name: '[直播] CMHH', img: '../assets/cmhh.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=CMHH' },
-            { name: '[直播] Pure1ove', img: '../assets/pl.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=PL' },
-            { name: '[直播] DJ_Hero', img: '../assets/ljy.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=LJY' },
-            { name: '[直播] REDguard', img: '../assets/aaa.jpg', url: 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=AAA' }
+            { name: '[直播] JOYG', img: '../assets/joyg.jpg', stream: 'JOYG' },
+            { name: '[直播] CMHH', img: '../assets/cmhh.jpg', stream: 'CMHH' },
+            { name: '[直播] Pure1ove', img: '../assets/pl.jpg', stream: 'PL' },
+            { name: '[直播] DJ_Hero', img: '../assets/ljy.jpg', stream: 'LJY' },
+            { name: '[直播] REDguard', img: '../assets/aaa.jpg', stream: 'AAA' }
         ];
 
         this._bindUI();
         this._loadPresetChannels();
+        this._loadHistory();
+        this._checkStreamStatus();
+        setInterval(() => this._checkStreamStatus(), 10000);
         this.updateStatus('就绪 - 点击频道或输入房间号开始播放');
     }
 
     _bindUI() {
-        document.querySelectorAll('.protocol-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.protocol-btn').forEach(b => {
-                    b.classList.remove('active');
-                    b.setAttribute('aria-pressed', 'false');
-                });
-                btn.classList.add('active');
-                btn.setAttribute('aria-pressed', 'true');
-                this.currentProto = btn.dataset.proto;
-            });
-        });
-
         document.getElementById('connectBtn').addEventListener('click', () => this.connectRoom());
         document.getElementById('refreshBtn').addEventListener('click', () => this.refresh());
         document.getElementById('disconnectBtn').addEventListener('click', () => this.disconnect());
@@ -55,6 +47,18 @@ class JiBaJiBaPlayer {
 
         const reconnectConfigBtn = document.getElementById('reconnectConfigBtn');
         if (reconnectConfigBtn) reconnectConfigBtn.addEventListener('click', () => this.openReconnectModal());
+
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', () => this.clearHistory());
+
+        if (this.serverSelect) {
+            this.serverSelect.addEventListener('change', (e) => {
+                this.currentServer = e.target.value;
+                this._loadPresetChannels();
+                this._checkStreamStatus();
+                this.updateStatus(`已切换到服务器: ${this.currentServer}`);
+            });
+        }
 
         this.roomInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.connectRoom(); });
 
@@ -89,17 +93,22 @@ class JiBaJiBaPlayer {
     _loadPresetChannels() {
         this.presetContainer.innerHTML = '';
         this.presetChannels.forEach((ch, index) => {
-            const btn = this._createChannelButton(ch.name, ch.img, ch.url, false, 'whep');
+            const url = this._buildStreamUrl(ch.stream);
+            const btn = this._createChannelButton(ch.name, ch.img, url, false);
             btn.setAttribute('data-hotkey', index + 1);
             this.presetContainer.appendChild(btn);
         });
     }
 
-    _createChannelButton(name, img, url, manual = false, proto = 'whep') {
+    _buildStreamUrl(stream) {
+        return `http://${this.currentServer}:1985/rtc/v1/whep/?app=live&stream=${stream}`;
+    }
+
+    _createChannelButton(name, img, url, manual = false) {
         const btn = document.createElement('button');
         btn.className = 'button_play' + (manual ? ' manual' : '');
         btn.type = 'button';
-        btn.addEventListener('click', () => this.connectStream(url, proto));
+        btn.addEventListener('click', () => this.connectStream(url));
         btn.addEventListener('mousedown', () => btn.classList.add('pressed'));
         document.addEventListener('mouseup', () => btn.classList.remove('pressed'));
         btn.addEventListener('mouseleave', () => btn.classList.remove('pressed'));
@@ -117,10 +126,17 @@ class JiBaJiBaPlayer {
         txt.innerText = name;
         btn.appendChild(txt);
 
+        const indicator = document.createElement('div');
+        indicator.className = 'status-indicator';
+        const streamName = this._extractStreamName(url);
+        if (streamName) indicator.setAttribute('streamname', streamName);
+        btn.appendChild(indicator);
+
         if (manual) {
             const urlDiv = document.createElement('div');
             urlDiv.className = 'url_text';
             urlDiv.innerText = url;
+            btn.appendChild(urlDiv);
 
             const delBtn = document.createElement('button');
             delBtn.className = 'delete_btn';
@@ -130,12 +146,11 @@ class JiBaJiBaPlayer {
             delBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (btn.parentElement) btn.parentElement.removeChild(btn);
-                if (urlDiv.parentElement) urlDiv.parentElement.removeChild(urlDiv);
+                this._saveHistory();
             });
 
             btn.appendChild(delBtn);
             this.historyContainer.appendChild(btn);
-            this.historyContainer.appendChild(urlDiv);
         }
 
         return btn;
@@ -143,14 +158,7 @@ class JiBaJiBaPlayer {
 
     generateUrl(room) {
         if (!room) return null;
-        switch (this.currentProto) {
-            case 'whep':
-                return `http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=${room}`;
-            case 'hls':
-                return `http://localhost:8080/live/${room}.m3u8`;
-            default:
-                return null;
-        }
+        return this._buildStreamUrl(room);
     }
 
     connectRoom() {
@@ -158,16 +166,57 @@ class JiBaJiBaPlayer {
         if (!room) return;
         const url = this.generateUrl(room);
         if (!url) return;
-        this.connectStream(url, this.currentProto);
-        this.addManualChannel(room, url, this.currentProto);
+        this.connectStream(url);
+        this.addManualChannel(room, url);
     }
 
-    addManualChannel(name, url, proto) {
-        this._createChannelButton(name, null, url, true, proto);
+    addManualChannel(name, url) {
+        const historyContainer = this.historyContainer;
+        const maxHistory = 6;
+        
+        while (historyContainer.children.length >= maxHistory) {
+            historyContainer.removeChild(historyContainer.lastChild);
+        }
+        
+        this._createChannelButton(name, null, url, true);
+        this._saveHistory();
+    }
+
+    _loadHistory() {
+        try {
+            const history = JSON.parse(localStorage.getItem('jibajiba_history') || '[]');
+            history.forEach(item => {
+                this._createChannelButton(item.name, null, item.url, true);
+            });
+        } catch (e) {
+            console.error('加载历史记录失败:', e);
+        }
+    }
+
+    _saveHistory() {
+        try {
+            const history = [];
+            this.historyContainer.querySelectorAll('.button_play.manual').forEach(btn => {
+                const name = btn.querySelector('.channel_text')?.innerText || '';
+                const url = btn.querySelector('.url_text')?.innerText || '';
+                if (name && url) {
+                    history.push({ name, url });
+                }
+            });
+            localStorage.setItem('jibajiba_history', JSON.stringify(history));
+        } catch (e) {
+            console.error('保存历史记录失败:', e);
+        }
+    }
+
+    clearHistory() {
+        this.historyContainer.innerHTML = '';
+        localStorage.removeItem('jibajiba_history');
+        this.updateStatus('历史记录已清空');
     }
 
     refresh() {
-        if (this.currentUrl) this.connectStream(this.currentUrl, this.currentProto);
+        if (this.currentUrl) this.connectStream(this.currentUrl);
     }
 
     disconnect() {
@@ -196,26 +245,11 @@ class JiBaJiBaPlayer {
         if (this.isFullscreen) this.toggleFullscreen();
     }
 
-    async connectStream(url, proto) {
+    async connectStream(url) {
         this.disconnect();
         this.isManualDisconnect = false;
         this.currentUrl = url;
-        this.currentProto = proto;
         this.updateStatus('正在连接...');
-
-        if (proto === 'hls') {
-            try {
-                this.video.src = url;
-                this.video.load();
-                await this.video.play();
-                this.updateStatus('HLS连接成功 · 正在播放');
-                this._startHLSStats();
-            } catch (e) {
-                console.error('HLS连接失败', e);
-                this.updateStatus(`HLS连接失败: ${e.message}`);
-            }
-            return;
-        }
 
         try {
             this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
@@ -425,20 +459,6 @@ class JiBaJiBaPlayer {
         }
     }
 
-    _startHLSStats() {
-        if (this.statsInterval) clearInterval(this.statsInterval);
-        this.statsInterval = setInterval(() => {
-            if (this.video.readyState > 0) {
-                const buffered = this.video.buffered;
-                let bufferedTime = 0;
-                if (buffered.length > 0) {
-                    bufferedTime = buffered.end(buffered.length - 1) - this.video.currentTime;
-                }
-                this.updateStatus(`HLS播放中 · 缓冲: ${bufferedTime.toFixed(1)}秒`);
-            }
-        }, 2000);
-    }
-
     toggleFullscreen() {
         if (!this.isFullscreen) {
             const overlay = document.createElement('div');
@@ -540,6 +560,59 @@ class JiBaJiBaPlayer {
 
         console.log(`重连配置已更新: 最大次数=${this.maxReconnectAttempts}, 初始延迟=${this.reconnectDelay}ms, 最大延迟=${this.maxReconnectDelay}ms`);
         this.closeReconnectModal();
+    }
+
+    _extractStreamName(url) {
+        const match = url.match(/stream=([^&]+)/);
+        return match ? match[1] : null;
+    }
+
+    async _checkStreamStatus() {
+        try {
+            const response = await fetch(`http://${this.currentServer}:1985/api/v1/streams/`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            
+            if (data.code === 0 && data.streams) {
+                this.streamStatus = {};
+                data.streams.forEach(stream => {
+                    this.streamStatus[stream.name] = {
+                        active: stream.publish && stream.publish.active,
+                        video: stream.video,
+                        audio: stream.audio
+                    };
+                });
+                
+                this._updateChannelStatusIndicators();
+            }
+        } catch (error) {
+            console.error('获取流状态失败:', error);
+            this._setAllStatusUnknown();
+        }
+    }
+
+    _updateChannelStatusIndicators() {
+        const indicators = document.querySelectorAll('.status-indicator[streamname]');
+        indicators.forEach(indicator => {
+            const streamName = indicator.getAttribute('streamname');
+            const status = this.streamStatus && this.streamStatus[streamName];
+            
+            if (status && status.active) {
+                indicator.style.background = '#00aa00';
+                indicator.style.boxShadow = '0 0 20px #00ff00';
+            } else {
+                indicator.style.background = '#ff0000';
+                indicator.style.boxShadow = '0 0 20px #ff0000';
+            }
+        });
+    }
+
+    _setAllStatusUnknown() {
+        const indicators = document.querySelectorAll('.status-indicator[streamname]');
+        indicators.forEach(indicator => {
+            indicator.style.background = '#ff0000';
+            indicator.style.boxShadow = '0 0 50px #ff0000';
+        });
     }
 
     updateStatus(text) { if (this.statusEl) this.statusEl.innerText = text; }

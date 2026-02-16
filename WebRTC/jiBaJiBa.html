@@ -10,14 +10,6 @@
 <body>
     <div class="container">
         <div class="title_"><img src="../assets/icon.png" alt="logo">JiBaJiBa</div>
-        <div class="protocols" role="tablist" aria-label="协议选择">
-            <button class="protocol-btn active" data-proto="whep" aria-pressed="true" onclick="location.href='http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG'">WHEP</button>
-            <button class="protocol-btn" data-proto="hls" aria-pressed="false" onclick="location.href='http://localhost:8080/live/room.m3u8'">HLS</button>
-        </div>
-        <div class="search_">
-            <input id="roomInput" type="text" placeholder="输入房间号" class="text_enter" aria-label="房间号">
-            <button class="button_s" id="connectBtn">连接</button>
-        </div>
     </div>
 
     <div class="main_">
@@ -29,13 +21,23 @@
                 <button class="button_l" id="disconnectBtn">断开</button>
                 <button class="button_l" id="fullscreenBtn">网页全屏</button>
                 <button class="button_l" id="reconnectConfigBtn">自动重连配置</button>
+                <select id="serverSelect" class="server-select" title="选择服务器">
+                    <option value="10.126.126.15">10.126.126.15</option>
+                </select>
             </div>
         </div>
 
         <div class="buttons" id="channelList">
             <div class="section-title">预设频道</div>
             <div id="presetContainer" aria-label="预设频道"></div>
-            <div class="section-title">历史记录</div>
+            <div class="search_">
+                <input id="roomInput" type="text" placeholder="输入房间号" class="text_enter" aria-label="房间号">
+                <button class="button_s" id="connectBtn">连接</button>
+            </div>
+            <div class="section-title-row">
+                <div class="section-title">历史记录</div>
+                <button class="clear-history-btn" id="clearHistoryBtn">全部删除</button>
+            </div>
             <div id="historyContainer" aria-label="历史记录"></div>
         </div>
     </div>
