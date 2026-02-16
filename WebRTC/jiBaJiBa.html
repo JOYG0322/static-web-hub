@@ -199,6 +199,95 @@
             .videoContainer { height: 300px; }
             #fullscreenBtn { display: none; }
         }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 320px;
+            max-width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.2s;
+        }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .modal-close:hover { color: #ff4d4d; }
+        .modal-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .modal-label {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+        .modal-input {
+            width: 100px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--bg-hover);
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-size: 14px;
+            text-align: right;
+        }
+        .modal-input:focus { outline: none; border-color: var(--accent); }
+        .modal-hint {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-left: 8px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.15s;
+        }
+        .modal-btn-cancel { background: var(--bg-hover); color: var(--text-main); }
+        .modal-btn-save { background: var(--accent); color: #fff; }
+        .modal-btn:hover { opacity: 0.85; }
     </style>
 </head>
 <body>
@@ -222,6 +311,7 @@
                 <button class="button_l" id="refreshBtn">刷新</button>
                 <button class="button_l" id="disconnectBtn">断开</button>
                 <button class="button_l" id="fullscreenBtn">网页全屏</button>
+                <button class="button_l" id="reconnectConfigBtn">自动重连配置</button>
             </div>
         </div>
 
@@ -243,6 +333,14 @@
                 this.isFullscreen = false;
                 this.fullscreenTimeout = null;
                 this.currentProto = 'whep';
+
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectDelay = 1000;
+                this.maxReconnectDelay = 30000;
+                this.reconnectTimer = null;
+                this.isManualDisconnect = false;
+                this.isConnected = false;
 
                 this.video = document.getElementById('remoteVideo');
                 this.statusEl = document.getElementById('status');
@@ -281,6 +379,9 @@
                 document.getElementById('refreshBtn').addEventListener('click', () => this.refresh());
                 document.getElementById('disconnectBtn').addEventListener('click', () => this.disconnect());
                 if (this.fullscreenBtn) this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+
+                const reconnectConfigBtn = document.getElementById('reconnectConfigBtn');
+                if (reconnectConfigBtn) reconnectConfigBtn.addEventListener('click', () => this.openReconnectModal());
 
                 this.roomInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.connectRoom(); });
 
@@ -397,6 +498,16 @@
             }
 
             disconnect() {
+                this.isManualDisconnect = true;
+                this.isConnected = false;
+                
+                if (this.reconnectTimer) {
+                    clearTimeout(this.reconnectTimer);
+                    this.reconnectTimer = null;
+                }
+                this.reconnectAttempts = 0;
+                this.reconnectDelay = 1000;
+                
                 if (this.pc) {
                     try { this.pc.close(); } catch (e) {}
                     this.pc = null;
@@ -414,6 +525,7 @@
 
             async connectStream(url, proto) {
                 this.disconnect();
+                this.isManualDisconnect = false;
                 this.currentUrl = url;
                 this.currentProto = proto;
                 this.updateStatus('正在连接...');
@@ -447,7 +559,18 @@
                     this.pc.oniceconnectionstatechange = () => {
                         if (this.pc) {
                             const st = this.pc.iceConnectionState;
-                            if (st === 'failed' || st === 'disconnected') this.updateStatus(`ICE: ${st}`);
+                            console.log(`ICE状态: ${st}`);
+                            if (st === 'connected' || st === 'completed') {
+                                this.isConnected = true;
+                                this.reconnectAttempts = 0;
+                                this.reconnectDelay = 1000;
+                            } else if (st === 'failed') {
+                                this.updateStatus('ICE连接失败，准备重连...');
+                                this._attemptReconnect();
+                            } else if (st === 'disconnected') {
+                                this.updateStatus('ICE连接断开，等待恢复...');
+                                this._waitForIceRecovery();
+                            }
                         }
                     };
 
@@ -483,22 +606,152 @@
                             if (r.type === 'inbound-rtp' && r.kind === 'video') {
                                 if (r.framesPerSecond) fps = r.framesPerSecond;
                                 if (r.bytesReceived && r.timestamp) {
-                                    if (!window._lastBytes) window._lastBytes = r.bytesReceived;
-                                    const dt = (r.timestamp - (window._lastTimestamp || r.timestamp)) / 1000;
-                                    if (dt > 0) bitrate = ((r.bytesReceived - window._lastBytes) * 8 / dt / 1024 / 1024).toFixed(2);
+                                    if (window._lastBytes && window._lastTime) {
+                                        const dt = (r.timestamp - window._lastTime) / 1000;
+                                        bitrate = Math.round(((r.bytesReceived - window._lastBytes) * 8) / dt / 1000);
+                                    }
                                     window._lastBytes = r.bytesReceived;
-                                    window._lastTimestamp = r.timestamp;
-                                }
-                                if (r.packetsLost !== undefined && r.packetsReceived !== undefined) {
-                                    const total = r.packetsLost + r.packetsReceived;
-                                    loss = total > 0 ? (r.packetsLost / total * 100).toFixed(2) : 0;
+                                    window._lastTime = r.timestamp;
                                 }
                             }
-                            if (r.type === 'candidate-pair' && r.currentRoundTripTime) rtt = (r.currentRoundTripTime * 1000).toFixed(0);
+                            if (r.type === 'candidate-pair' && r.state === 'succeeded') {
+                                if (r.currentRoundTripTime) rtt = Math.round(r.currentRoundTripTime * 1000);
+                            }
+                            if (r.type === 'inbound-rtp' && r.kind === 'video' && r.packetsLost !== undefined) {
+                                const lost = r.packetsLost || 0;
+                                const total = (r.packetsReceived || 0) + lost;
+                                if (total > 0) loss = Math.round((lost / total) * 100);
+                            }
                         });
-                        this.updateStatus(`延迟: ${rtt}ms | 码率: ${bitrate}Mbps | FPS: ${fps} | 丢包率: ${loss}%`);
+                        this.updateStatus(`WebRTC · ${bitrate}kbps · ${fps}fps · RTT:${rtt}ms · 丢包:${loss}%`);
                     } catch (e) {}
                 }, 1000);
+            }
+
+            _waitForIceRecovery() {
+                if (this.isManualDisconnect) return;
+                
+                let checkCount = 0;
+                const maxChecks = 10;
+                
+                const checkInterval = setInterval(() => {
+                    if (this.isManualDisconnect || !this.pc) {
+                        clearInterval(checkInterval);
+                        return;
+                    }
+                    
+                    const state = this.pc.iceConnectionState;
+                    if (state === 'connected' || state === 'completed') {
+                        clearInterval(checkInterval);
+                        this.updateStatus('ICE连接已恢复');
+                        return;
+                    }
+                    
+                    checkCount++;
+                    if (checkCount >= maxChecks || state === 'failed') {
+                        clearInterval(checkInterval);
+                        this.updateStatus('ICE恢复失败，准备重连...');
+                        this._attemptReconnect();
+                    }
+                }, 500);
+            }
+
+            _attemptReconnect() {
+                if (this.isManualDisconnect) {
+                    console.log('用户主动断开，不进行重连');
+                    return;
+                }
+                
+                if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                    this.updateStatus(`重连失败，已达最大重试次数(${this.maxReconnectAttempts})`);
+                    console.log('已达最大重连次数');
+                    return;
+                }
+                
+                if (this.reconnectTimer) {
+                    clearTimeout(this.reconnectTimer);
+                }
+                
+                this.reconnectAttempts++;
+                const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), this.maxReconnectDelay);
+                
+                this.updateStatus(`第${this.reconnectAttempts}次重连，${Math.round(delay/1000)}秒后尝试...`);
+                console.log(`第${this.reconnectAttempts}次重连，延迟${delay}ms`);
+                
+                this.reconnectTimer = setTimeout(async () => {
+                    if (this.isManualDisconnect) return;
+                    
+                    if (!this.currentUrl) {
+                        this.updateStatus('无法重连：没有有效的URL');
+                        return;
+                    }
+                    
+                    try {
+                        await this._doReconnect();
+                    } catch (e) {
+                        console.error('重连失败:', e);
+                        this._attemptReconnect();
+                    }
+                }, delay);
+            }
+
+            async _doReconnect() {
+                this._cleanupPeerConnection();
+                
+                this.pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+                this.pc.addTransceiver('video', { direction: 'recvonly' });
+                this.pc.addTransceiver('audio', { direction: 'recvonly' });
+
+                this.pc.ontrack = (e) => {
+                    try { this.video.srcObject = e.streams[0]; } catch (err) {}
+                    this.updateStatus('重连成功 · 正在接收视频');
+                    this.reconnectAttempts = 0;
+                    this.reconnectDelay = 1000;
+                };
+
+                this.pc.oniceconnectionstatechange = () => {
+                    if (this.pc) {
+                        const st = this.pc.iceConnectionState;
+                        console.log(`重连ICE状态: ${st}`);
+                        if (st === 'connected' || st === 'completed') {
+                            this.isConnected = true;
+                            this.reconnectAttempts = 0;
+                            this.reconnectDelay = 1000;
+                        } else if (st === 'failed') {
+                            this.updateStatus('重连ICE失败，准备再次重连...');
+                            this._attemptReconnect();
+                        } else if (st === 'disconnected') {
+                            this.updateStatus('重连后ICE断开，等待恢复...');
+                            this._waitForIceRecovery();
+                        }
+                    }
+                };
+
+                const offer = await this.pc.createOffer();
+                await this.pc.setLocalDescription(offer);
+
+                const response = await fetch(this.currentUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/sdp' },
+                    body: offer.sdp
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const answer = await response.text();
+                await this.pc.setRemoteDescription({ type: 'answer', sdp: answer });
+
+                this._startStats();
+            }
+
+            _cleanupPeerConnection() {
+                if (this.pc) {
+                    try {
+                        this.pc.ontrack = null;
+                        this.pc.oniceconnectionstatechange = null;
+                        this.pc.close();
+                    } catch (e) {}
+                    this.pc = null;
+                }
             }
 
             _startHLSStats() {
@@ -525,21 +778,22 @@
                     controls.className = 'fullscreen-controls';
                     controls.innerHTML = `<button id="fsDisconnectBtn" type="button">断开</button><button id="fsExitBtn" type="button">退出全屏</button>`;
 
-                    const videoClone = this.video.cloneNode(true);
-                    videoClone.controls = true;
-                    try {
-                        if (this.video.srcObject) videoClone.srcObject = this.video.srcObject;
-                        if (this.video.src) videoClone.src = this.video.src;
-                    } catch (e) {}
-
-                    overlay.appendChild(videoClone);
+                    const videoWrapper = document.createElement('div');
+                    videoWrapper.style.cssText = 'width:100%;height:100%;display:flex;justify-content:center;align-items:center;';
+                    
+                    this.video.style.display = '';
+                    this.video.style.width = '100%';
+                    this.video.style.height = '100%';
+                    this.video.style.objectFit = 'contain';
+                    videoWrapper.appendChild(this.video);
+                    
+                    overlay.appendChild(videoWrapper);
                     overlay.appendChild(controls);
                     document.body.appendChild(overlay);
 
                     document.getElementById('fsDisconnectBtn').addEventListener('click', () => this.disconnect());
                     document.getElementById('fsExitBtn').addEventListener('click', () => this.toggleFullscreen());
 
-                    this.video.style.display = 'none';
                     if (this.fullscreenBtn) this.fullscreenBtn.textContent = '退出全屏';
                     this.isFullscreen = true;
 
@@ -555,18 +809,108 @@
                     });
                 } else {
                     const overlay = document.getElementById('fullscreenContainer');
-                    if (overlay) document.body.removeChild(overlay);
+                    if (overlay) {
+                        const videoWrapper = overlay.querySelector('div');
+                        if (videoWrapper && this.video.parentElement === videoWrapper) {
+                            videoWrapper.removeChild(this.video);
+                        }
+                        document.body.removeChild(overlay);
+                    }
                     if (this.fullscreenTimeout) { clearTimeout(this.fullscreenTimeout); this.fullscreenTimeout = null; }
-                    this.video.style.display = 'block';
+                    
+                    const videoContainer = document.querySelector('.videoContainer');
+                    if (videoContainer && this.video.parentElement !== videoContainer) {
+                        const statusEl = videoContainer.querySelector('.status');
+                        const controlsEl = videoContainer.querySelector('.controls');
+                        if (statusEl) {
+                            videoContainer.insertBefore(this.video, statusEl);
+                        } else if (controlsEl) {
+                            videoContainer.insertBefore(this.video, controlsEl);
+                        } else {
+                            videoContainer.insertBefore(this.video, videoContainer.firstChild);
+                        }
+                    }
+                    this.video.style.width = '';
+                    this.video.style.height = '';
+                    this.video.style.objectFit = '';
+                    this.video.style.display = '';
+                    
                     if (this.fullscreenBtn) this.fullscreenBtn.textContent = '网页全屏';
                     this.isFullscreen = false;
                 }
+            }
+
+            openReconnectModal() {
+                const modal = document.getElementById('reconnectModal');
+                const inputMaxAttempts = document.getElementById('inputMaxAttempts');
+                const inputReconnectDelay = document.getElementById('inputReconnectDelay');
+                const inputMaxDelay = document.getElementById('inputMaxDelay');
+
+                inputMaxAttempts.value = this.maxReconnectAttempts;
+                inputReconnectDelay.value = this.reconnectDelay;
+                inputMaxDelay.value = this.maxReconnectDelay;
+
+                modal.classList.add('active');
+            }
+
+            closeReconnectModal() {
+                const modal = document.getElementById('reconnectModal');
+                modal.classList.remove('active');
+            }
+
+            saveReconnectConfig() {
+                const inputMaxAttempts = document.getElementById('inputMaxAttempts');
+                const inputReconnectDelay = document.getElementById('inputReconnectDelay');
+                const inputMaxDelay = document.getElementById('inputMaxDelay');
+
+                this.maxReconnectAttempts = parseInt(inputMaxAttempts.value) || 5;
+                this.reconnectDelay = parseInt(inputReconnectDelay.value) || 1000;
+                this.maxReconnectDelay = parseInt(inputMaxDelay.value) || 30000;
+
+                console.log(`重连配置已更新: 最大次数=${this.maxReconnectAttempts}, 初始延迟=${this.reconnectDelay}ms, 最大延迟=${this.maxReconnectDelay}ms`);
+                this.closeReconnectModal();
             }
 
             updateStatus(text) { if (this.statusEl) this.statusEl.innerText = text; }
         }
 
         window.player = new JiBaJiBaPlayer();
+    </script>
+
+    <div class="modal-overlay" id="reconnectModal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span>自动重连配置</span>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-row">
+                <label class="modal-label">最大重连次数</label>
+                <input type="number" class="modal-input" id="inputMaxAttempts" min="1" max="20" value="5">
+                <span class="modal-hint">次</span>
+            </div>
+            <div class="modal-row">
+                <label class="modal-label">初始重连延迟</label>
+                <input type="number" class="modal-input" id="inputReconnectDelay" min="500" max="10000" step="500" value="1000">
+                <span class="modal-hint">毫秒</span>
+            </div>
+            <div class="modal-row">
+                <label class="modal-label">最大重连延迟</label>
+                <input type="number" class="modal-input" id="inputMaxDelay" min="5000" max="120000" step="5000" value="30000">
+                <span class="modal-hint">毫秒</span>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="modalCancel">取消</button>
+                <button class="modal-btn modal-btn-save" id="modalSave">保存</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('modalClose').addEventListener('click', () => window.player.closeReconnectModal());
+        document.getElementById('modalCancel').addEventListener('click', () => window.player.closeReconnectModal());
+        document.getElementById('modalSave').addEventListener('click', () => window.player.saveReconnectConfig());
+        document.getElementById('reconnectModal').addEventListener('click', (e) => {
+            if (e.target.id === 'reconnectModal') window.player.closeReconnectModal();
+        });
     </script>
 </body>
 </html>
