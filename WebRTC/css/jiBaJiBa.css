@@ -153,6 +153,63 @@ video { width: 100%; flex: 1; border-radius: 10px; background: #000; }
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 .server-select:hover { background: #33b6e8; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.remember-switch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-sub);
+    user-select: none;
+}
+.remember-switch input { display: none; }
+.remember-slider {
+    width: 32px;
+    height: 18px;
+    background: var(--bg-hover);
+    border-radius: 9px;
+    position: relative;
+    transition: background 0.2s;
+}
+.remember-slider::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: var(--text-main);
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s;
+}
+.remember-switch input:checked + .remember-slider {
+    background: var(--accent);
+}
+.remember-switch input:checked + .remember-slider::after {
+    transform: translateX(14px);
+}
+.remember-label { white-space: nowrap; font-size: 14px; }
+.auto-channel-label {
+    font-size: 14px;
+    color: var(--text-sub);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+.auto-channel-select {
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: none;
+    background: var(--bg-hover);
+    color: var(--text-main);
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s, background 0.12s, opacity 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.auto-channel-select:hover { background: #33b6e8; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.auto-channel-select:disabled { opacity: 0.5; cursor: not-allowed; }
 .buttons {
     flex: 1;
     min-width: 220px;
@@ -352,7 +409,8 @@ video { width: 100%; flex: 1; border-radius: 10px; background: #000; }
     margin-bottom: 14px;
 }
 .modal-label {
-    flex: 1;
+    width: 100px;
+    flex-shrink: 0;
     font-size: 14px;
     color: var(--text-main);
 }

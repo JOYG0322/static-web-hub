@@ -21,6 +21,8 @@ class JiBaJiBaPlayer {
         this.presetContainer = document.getElementById('presetContainer');
         this.historyContainer = document.getElementById('historyContainer');
         this.serverSelect = document.getElementById('serverSelect');
+        this.rememberChannelCheckbox = document.getElementById('rememberChannel');
+        this.autoChannelSelect = document.getElementById('autoChannelSelect');
         this.currentServer = this.serverSelect ? this.serverSelect.value : '10.126.126.15';
 
         this.presetChannels = [
@@ -35,9 +37,19 @@ class JiBaJiBaPlayer {
         this._bindUI();
         this._loadPresetChannels();
         this._loadHistory();
-        this._checkStreamStatus();
-        setInterval(() => this._checkStreamStatus(), 10000);
+        this._initStreamStatus();
+        this._loadRememberSettings();
         this.updateStatus('就绪 - 点击频道或输入房间号开始播放');
+    }
+
+    _initStreamStatus() {
+        if (window.StreamStatusManager) {
+            window.StreamStatusManager.setServer(this.currentServer);
+            window.StreamStatusManager.startPolling(10000);
+            window.StreamStatusManager.onStatusChange((status) => {
+                this._updateChannelStatusIndicators(status);
+            });
+        }
     }
 
     _initTheme() {
@@ -145,8 +157,11 @@ class JiBaJiBaPlayer {
         if (this.serverSelect) {
             this.serverSelect.addEventListener('change', (e) => {
                 this.currentServer = e.target.value;
+                if (window.StreamStatusManager) {
+                    window.StreamStatusManager.setServer(this.currentServer);
+                    window.StreamStatusManager.fetchStatus();
+                }
                 this._loadPresetChannels();
-                this._checkStreamStatus();
                 this.updateStatus(`已切换到服务器: ${this.currentServer}`);
             });
         }
@@ -300,6 +315,73 @@ class JiBaJiBaPlayer {
         }
     }
 
+    _loadRememberSettings() {
+        const rememberEnabled = localStorage.getItem('jibajiba_remember') === 'true';
+        const savedAutoChannel = localStorage.getItem('jibajiba_auto_channel') || '';
+        
+        if (this.rememberChannelCheckbox) {
+            this.rememberChannelCheckbox.checked = rememberEnabled;
+            this.rememberChannelCheckbox.addEventListener('change', () => {
+                localStorage.setItem('jibajiba_remember', this.rememberChannelCheckbox.checked);
+                if (this.autoChannelSelect) {
+                    this.autoChannelSelect.disabled = this.rememberChannelCheckbox.checked;
+                }
+                if (!this.rememberChannelCheckbox.checked) {
+                    this._clearSavedChannel();
+                }
+            });
+        }
+        
+        if (this.autoChannelSelect) {
+            this.autoChannelSelect.value = savedAutoChannel;
+            this.autoChannelSelect.disabled = rememberEnabled;
+            this.autoChannelSelect.addEventListener('change', () => {
+                localStorage.setItem('jibajiba_auto_channel', this.autoChannelSelect.value);
+            });
+        }
+        
+        if (rememberEnabled) {
+            const savedChannel = localStorage.getItem('jibajiba_last_channel');
+            if (savedChannel) {
+                const streamName = this._extractStreamName(savedChannel);
+                this._tryAutoConnect(streamName, savedChannel, '记住的频道');
+            }
+        } else if (savedAutoChannel) {
+            const url = this._buildStreamUrl(savedAutoChannel);
+            this._tryAutoConnect(savedAutoChannel, url, '预设频道');
+        }
+    }
+
+    async _tryAutoConnect(streamName, url, source) {
+        this.updateStatus(`检测${source}在线状态...`);
+        
+        if (window.StreamStatusManager) {
+            await window.StreamStatusManager.fetchStatus();
+            const isOnline = window.StreamStatusManager.isOnline(streamName);
+            
+            if (isOnline) {
+                console.log(`[${source}] ${streamName} 在线，开始连接`);
+                this.connectStream(url);
+            } else {
+                console.log(`[${source}] ${streamName} 不在线，取消自动连接`);
+                this.updateStatus(`${source} ${streamName} 不在线，取消自动连接`);
+            }
+        } else {
+            console.error('[StreamStatus] 模块未加载');
+            this.updateStatus('状态检测模块未加载');
+        }
+    }
+
+    _saveCurrentChannel() {
+        if (this.currentUrl && this.rememberChannelCheckbox?.checked) {
+            localStorage.setItem('jibajiba_last_channel', this.currentUrl);
+        }
+    }
+
+    _clearSavedChannel() {
+        localStorage.removeItem('jibajiba_last_channel');
+    }
+
     clearHistory() {
         this.historyContainer.innerHTML = '';
         localStorage.removeItem('jibajiba_history');
@@ -313,6 +395,8 @@ class JiBaJiBaPlayer {
     disconnect() {
         this.isManualDisconnect = true;
         this.isConnected = false;
+        
+        this._clearSavedChannel();
         
         if (this.reconnectTimer) {
             clearTimeout(this.reconnectTimer);
@@ -360,6 +444,7 @@ class JiBaJiBaPlayer {
                         this.isConnected = true;
                         this.reconnectAttempts = 0;
                         this.reconnectDelay = 1000;
+                        this._saveCurrentChannel();
                     } else if (st === 'failed') {
                         this.updateStatus('ICE连接失败，准备重连...');
                         this._attemptReconnect();
@@ -513,6 +598,7 @@ class JiBaJiBaPlayer {
                     this.isConnected = true;
                     this.reconnectAttempts = 0;
                     this.reconnectDelay = 1000;
+                    this._saveCurrentChannel();
                 } else if (st === 'failed') {
                     this.updateStatus('重连ICE失败，准备再次重连...');
                     this._attemptReconnect();
@@ -658,51 +744,19 @@ class JiBaJiBaPlayer {
         return match ? match[1] : null;
     }
 
-    async _checkStreamStatus() {
-        try {
-            const response = await fetch(`http://${this.currentServer}:1985/api/v1/streams/`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            
-            if (data.code === 0 && data.streams) {
-                this.streamStatus = {};
-                data.streams.forEach(stream => {
-                    this.streamStatus[stream.name] = {
-                        active: stream.publish && stream.publish.active,
-                        video: stream.video,
-                        audio: stream.audio
-                    };
-                });
-                
-                this._updateChannelStatusIndicators();
-            }
-        } catch (error) {
-            console.error('获取流状态失败:', error);
-            this._setAllStatusUnknown();
-        }
-    }
-
-    _updateChannelStatusIndicators() {
+    _updateChannelStatusIndicators(status) {
         const indicators = document.querySelectorAll('.status-indicator[streamname]');
         indicators.forEach(indicator => {
             const streamName = indicator.getAttribute('streamname');
-            const status = this.streamStatus && this.streamStatus[streamName];
+            const streamStatus = status && status[streamName];
             
-            if (status && status.active) {
+            if (streamStatus && streamStatus.active) {
                 indicator.style.background = '#00aa00';
                 indicator.style.boxShadow = '0 0 20px #00ff00';
             } else {
                 indicator.style.background = '#ff0000';
                 indicator.style.boxShadow = '0 0 20px #ff0000';
             }
-        });
-    }
-
-    _setAllStatusUnknown() {
-        const indicators = document.querySelectorAll('.status-indicator[streamname]');
-        indicators.forEach(indicator => {
-            indicator.style.background = '#ff0000';
-            indicator.style.boxShadow = '0 0 50px #ff0000';
         });
     }
 

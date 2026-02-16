@@ -45,6 +45,20 @@
                 <select id="serverSelect" class="server-select" title="选择服务器">
                     <option value="10.126.126.15">10.126.126.15</option>
                 </select>
+                <label class="remember-switch" title="记住打开的频道">
+                    <span class="remember-label">记住打开的频道</span>
+                    <input type="checkbox" id="rememberChannel">
+                    <span class="remember-slider"></span>
+                </label>
+                <span class="auto-channel-label">启动时自动开启频道</span>
+                <select id="autoChannelSelect" class="auto-channel-select" title="启动时自动连接">
+                    <option value="">无</option>
+                    <option value="JOYG">JOYG</option>
+                    <option value="CMHH">CMHH</option>
+                    <option value="PL">Pure1ove</option>
+                    <option value="LJY">DJ_Hero</option>
+                    <option value="AAA">REDguard</option>
+                </select>
             </div>
         </div>
 
@@ -93,6 +107,7 @@
 
     <script src="../assets/js/theme-manager.js"></script>
     <script src="adapter.js"></script>
+    <script src="js/stream-status.js"></script>
     <script src="js/jiBaJiBa.js"></script>
 </body>
 </html>
