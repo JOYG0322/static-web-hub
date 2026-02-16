@@ -62,6 +62,8 @@
                     this._dispatchThemeChange(e.newValue);
                 }
             });
+            
+            setTimeout(() => this._dispatchThemeChange(theme), 0);
         }
     };
     
