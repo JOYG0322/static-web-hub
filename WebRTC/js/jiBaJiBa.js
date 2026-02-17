@@ -491,7 +491,6 @@ class JiBaJiBaPlayer {
         this._resetQualityIndicator();
         this._resetAudioStats();
         window._lastBytes = 0;
-        if (this.isFullscreen) this.toggleFullscreen();
     }
 
     _resetQualityIndicator() {
@@ -616,6 +615,7 @@ class JiBaJiBaPlayer {
                 this.updateStatus(`${bitrate}kbps · ${fps}fps · ${resolution} · RTT:${rtt}ms · 抖动:${jitterStr} · 丢包:${loss}% · 带宽:${bitrateStr}`);
                 this._updateQualityIndicator(rtt, loss);
                 this._updateAudioInfo(audioJitter, audioSampleRate);
+                this.lastStats = { rtt: `${rtt}ms`, loss: `${loss}%`, bitrate: `${bitrate}kbps` };
             } catch (e) {}
         }, 1000);
     }
@@ -827,10 +827,6 @@ class JiBaJiBaPlayer {
             overlay.className = 'fullscreen-mode';
             overlay.id = 'fullscreenContainer';
 
-            const controls = document.createElement('div');
-            controls.className = 'fullscreen-controls';
-            controls.innerHTML = `<button id="fsDisconnectBtn" type="button">断开</button><button id="fsExitBtn" type="button">退出全屏</button>`;
-
             const videoWrapper = document.createElement('div');
             videoWrapper.style.cssText = 'width:100%;height:100%;display:flex;justify-content:center;align-items:center;';
             
@@ -841,25 +837,174 @@ class JiBaJiBaPlayer {
             videoWrapper.appendChild(this.video);
             
             overlay.appendChild(videoWrapper);
-            overlay.appendChild(controls);
             document.body.appendChild(overlay);
 
+            // 参数显示悬浮框
+            const statsBox = document.createElement('div');
+            statsBox.className = 'fullscreen-stats';
+            statsBox.id = 'fsStatsBox';
+            statsBox.innerHTML = `
+                <div class="fullscreen-stats-item">
+                    <span class="fullscreen-stats-label">延迟:</span>
+                    <span class="fullscreen-stats-value" id="fsLatency">-</span>
+                </div>
+                <div class="fullscreen-stats-item">
+                    <span class="fullscreen-stats-label">丢包:</span>
+                    <span class="fullscreen-stats-value" id="fsPacketLoss">-</span>
+                </div>
+                <div class="fullscreen-stats-item">
+                    <span class="fullscreen-stats-label">带宽:</span>
+                    <span class="fullscreen-stats-value" id="fsBandwidth">-</span>
+                </div>
+                <div class="fullscreen-stats-item">
+                    <span class="fullscreen-stats-label">流状态:</span>
+                    <span class="fullscreen-stats-value" id="fsStreamStatus">-</span>
+                </div>
+                <button class="fullscreen-stats-lock" id="fsStatsLock" type="button">🔓</button>
+            `;
+            overlay.appendChild(statsBox);
+
+            // 参数更新函数
+            const updateStats = () => {
+                const latencyEl = document.getElementById('fsLatency');
+                const packetLossEl = document.getElementById('fsPacketLoss');
+                const bandwidthEl = document.getElementById('fsBandwidth');
+                const streamStatusEl = document.getElementById('fsStreamStatus');
+                
+                if (latencyEl && this.lastStats) {
+                    latencyEl.textContent = this.lastStats.rtt || '-';
+                }
+                if (packetLossEl && this.lastStats) {
+                    packetLossEl.textContent = this.lastStats.loss || '-';
+                }
+                if (bandwidthEl && this.lastStats) {
+                    bandwidthEl.textContent = this.lastStats.bitrate || '-';
+                }
+                if (streamStatusEl && window.StreamStatusManager) {
+                    const status = window.StreamStatusManager.getAllStatus();
+                    const onlineCount = Object.values(status).filter(s => s.active).length;
+                    streamStatusEl.textContent = `${onlineCount}/${Object.keys(status).length}`;
+                }
+            };
+
+            // 定期更新参数
+            this.fsStatsInterval = setInterval(updateStats, 500);
+            updateStats();
+
+            // 锁定按钮事件
+            const lockBtn = document.getElementById('fsStatsLock');
+            let isLocked = false;
+            lockBtn.addEventListener('click', () => {
+                isLocked = !isLocked;
+                statsBox.classList.toggle('locked', isLocked);
+                lockBtn.classList.toggle('locked', isLocked);
+                lockBtn.textContent = isLocked ? '🔒' : '🔓';
+            });
+
+            // 悬浮框鼠标交互 - 默认隐藏，靠近时显示
+            overlay.addEventListener('mousemove', (e) => {
+                if (isLocked) return;
+                if (e.clientY < 50) {
+                    statsBox.classList.add('show');
+                } else {
+                    statsBox.classList.remove('show');
+                }
+            });
+            
+            statsBox.addEventListener('mouseenter', () => {
+                statsBox.classList.add('show');
+            });
+            statsBox.addEventListener('mouseleave', () => {
+                if (!isLocked) statsBox.classList.remove('show');
+            });
+
+            // 左侧控制面板
+            const leftSidebar = document.createElement('div');
+            leftSidebar.className = 'fullscreen-sidebar';
+            leftSidebar.id = 'fsLeftSidebar';
+            leftSidebar.innerHTML = `
+                <button id="fsRefreshBtn" title="刷新" type="button"><span>🔄</span><span>刷新</span></button>
+                <button id="fsDisconnectBtn" title="断开" type="button"><span>⏹️</span><span>断开</span></button>
+                <button id="fsExitBtn" title="退出全屏" type="button"><span>✕</span><span>退出</span></button>
+            `;
+            overlay.appendChild(leftSidebar);
+
+            // 左侧触发区域
+            const leftTrigger = document.createElement('div');
+            leftTrigger.className = 'fullscreen-sidebar-trigger';
+            leftTrigger.id = 'fsLeftTrigger';
+            overlay.appendChild(leftTrigger);
+
+            // 右侧预设频道面板
+            const rightSidebar = document.createElement('div');
+            rightSidebar.className = 'fullscreen-preset-sidebar';
+            rightSidebar.id = 'fsRightSidebar';
+            
+            // 添加预设频道按钮
+            this.presetContainer.querySelectorAll('.button_play').forEach(btn => {
+                const clone = document.createElement('button');
+                clone.className = 'fullscreen-preset-btn';
+                clone.type = 'button';
+                const img = btn.querySelector('.head_img');
+                const name = btn.querySelector('.channel_text')?.innerText || '';
+                const statusIndicator = btn.querySelector('.status-indicator');
+                const streamName = statusIndicator?.getAttribute('streamname') || '';
+                
+                let html = '';
+                if (img) {
+                    html += `<img src="${img.src}" alt="${name}">`;
+                }
+                html += `<div class="fullscreen-preset-btn-text">${name}</div>`;
+                html += `<div class="fullscreen-preset-btn-status">检测中...</div>`;
+                clone.innerHTML = html;
+                
+                // 检测在线状态
+                if (window.StreamStatusManager && streamName) {
+                    const statusEl = clone.querySelector('.fullscreen-preset-btn-status');
+                    const isOnline = window.StreamStatusManager.isOnline(streamName);
+                    statusEl.textContent = isOnline ? '在线' : '离线';
+                    statusEl.classList.toggle('offline', !isOnline);
+                }
+                
+                clone.addEventListener('click', () => {
+                    btn.click();
+                    rightSidebar.classList.remove('show');
+                });
+                rightSidebar.appendChild(clone);
+            });
+            
+            overlay.appendChild(rightSidebar);
+
+            // 右侧触发区域
+            const rightTrigger = document.createElement('div');
+            rightTrigger.className = 'fullscreen-preset-trigger';
+            rightTrigger.id = 'fsRightTrigger';
+            overlay.appendChild(rightTrigger);
+
+            // 事件监听
+            document.getElementById('fsRefreshBtn').addEventListener('click', () => {
+                if (this.pc && this.pc.connectionState === 'connected') {
+                    this.disconnect();
+                    setTimeout(() => this.connectStream(this.currentUrl), 500);
+                }
+            });
             document.getElementById('fsDisconnectBtn').addEventListener('click', () => this.disconnect());
-            document.getElementById('fsExitBtn').addEventListener('click', () => this.toggleFullscreen());
+            document.getElementById('fsExitBtn').addEventListener('click', () => {
+                this.isManualDisconnect = true;
+                this.toggleFullscreen();
+                this.isManualDisconnect = false;
+            });
+
+            // 左侧面板鼠标交互
+            leftTrigger.addEventListener('mouseenter', () => leftSidebar.classList.add('show'));
+            leftSidebar.addEventListener('mouseleave', () => leftSidebar.classList.remove('show'));
+
+            // 右侧面板鼠标交互
+            rightTrigger.addEventListener('mouseenter', () => rightSidebar.classList.add('show'));
+            rightSidebar.addEventListener('mouseleave', () => rightSidebar.classList.remove('show'));
 
             if (this.fullscreenBtn) this.fullscreenBtn.textContent = '退出全屏';
             this.isFullscreen = true;
-
-            this.fullscreenTimeout = setTimeout(() => controls.classList.add('hidden'), 1000);
-            overlay.addEventListener('mousemove', () => {
-                controls.classList.remove('hidden');
-                clearTimeout(this.fullscreenTimeout);
-                this.fullscreenTimeout = setTimeout(() => controls.classList.add('hidden'), 1200);
-            });
-            controls.addEventListener('mouseleave', () => {
-                clearTimeout(this.fullscreenTimeout);
-                this.fullscreenTimeout = setTimeout(() => controls.classList.add('hidden'), 1200);
-            });
         } else {
             const overlay = document.getElementById('fullscreenContainer');
             if (overlay) {
@@ -869,7 +1014,11 @@ class JiBaJiBaPlayer {
                 }
                 document.body.removeChild(overlay);
             }
-            if (this.fullscreenTimeout) { clearTimeout(this.fullscreenTimeout); this.fullscreenTimeout = null; }
+            
+            if (this.fsStatsInterval) {
+                clearInterval(this.fsStatsInterval);
+                this.fsStatsInterval = null;
+            }
             
             const videoContainer = document.querySelector('.videoContainer');
             if (videoContainer && this.video.parentElement !== videoContainer) {
