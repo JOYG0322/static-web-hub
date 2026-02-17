@@ -130,6 +130,11 @@ body {
     background: #777;
 }
 
+.fullscreen-controls.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .browser-warning {
     display: none;
     background: #fff3cd;
