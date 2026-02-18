@@ -1,11 +1,21 @@
 let pc = null;
 let isFullscreen = false;
-const whepUrl_JOYG = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=JOYG';
-const whepUrl_CMHH = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=CMHH';
-const whepUrl_PL = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=PL';
-const whepUrl_LJY = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=LJY';
-const whepUrl_aaa = 'http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=AAA';
-window.whepUrl_ref = ''
+let fullscreenTimeout = null;
+window.whepUrl_ref = '';
+
+const ICE_SERVERS = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    { urls: 'stun:stun.services.mozilla.com:3478' },
+    { urls: 'stun:stun.stunprotocol.org:3478' }
+];
+
+function getWhepUrl(stream) {
+    return `http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=${stream}`;
+}
 
 function isMobileDevice() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -72,20 +82,7 @@ function updateStatus(message) {
     console.log(message);
 }
 
-function getIceServers() {
-    return [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' },
-        { urls: 'stun:stun.services.mozilla.com:3478' },
-        { urls: 'stun:stun.stunprotocol.org:3478' }
-    ];
-}
-
 function toggleFullscreen() {
-    const videoContainer = document.getElementById('videoContainer');
     const video = document.getElementById('remoteVideo');
     const fullscreenBtn = document.querySelector('button[onclick="toggleFullscreen()"]');
     
@@ -101,31 +98,55 @@ function toggleFullscreen() {
             <button onclick="toggleFullscreen()">退出全屏</button>
         `;
         
-        const videoClone = video.cloneNode(true);
-        videoClone.controls = true;
+        const videoWrapper = document.createElement('div');
+        videoWrapper.style.cssText = 'width:100%;height:100%;display:flex;justify-content:center;align-items:center;';
         
-        fullscreenDiv.appendChild(videoClone);
+        video.style.display = '';
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.objectFit = 'contain';
+        videoWrapper.appendChild(video);
+        
+        fullscreenDiv.appendChild(videoWrapper);
         fullscreenDiv.appendChild(controlsDiv);
         document.body.appendChild(fullscreenDiv);
-        
-        if (video.srcObject) {
-            videoClone.srcObject = video.srcObject;
-        }
         
         isFullscreen = true;
         fullscreenBtn.textContent = '退出全屏';
         
-        video.style.display = 'none';
+        fullscreenTimeout = setTimeout(() => controlsDiv.classList.add('hidden'), 1000);
+        fullscreenDiv.addEventListener('mousemove', () => {
+            controlsDiv.classList.remove('hidden');
+            clearTimeout(fullscreenTimeout);
+            fullscreenTimeout = setTimeout(() => controlsDiv.classList.add('hidden'), 1200);
+        });
+        controlsDiv.addEventListener('mouseleave', () => {
+            clearTimeout(fullscreenTimeout);
+            fullscreenTimeout = setTimeout(() => controlsDiv.classList.add('hidden'), 1200);
+        });
         
         updateStatus('已进入网页全屏模式');
         
     } else {
         const fullscreenContainer = document.getElementById('fullscreenContainer');
         if (fullscreenContainer) {
+            const videoWrapper = fullscreenContainer.querySelector('div');
+            if (videoWrapper && video.parentElement === videoWrapper) {
+                videoWrapper.removeChild(video);
+            }
             document.body.removeChild(fullscreenContainer);
         }
         
-        video.style.display = 'block';
+        if (fullscreenTimeout) { clearTimeout(fullscreenTimeout); fullscreenTimeout = null; }
+        
+        const videoContainer = document.getElementById('videoContainer');
+        if (videoContainer && video.parentElement !== videoContainer) {
+            videoContainer.insertBefore(video, videoContainer.firstChild);
+        }
+        video.style.width = '';
+        video.style.height = '';
+        video.style.objectFit = '';
+        video.style.display = '';
         
         isFullscreen = false;
         fullscreenBtn.textContent = '网页全屏';
@@ -157,7 +178,7 @@ async function connect_play() {
         }
         
         pc = new RTCPeerConnection({
-            iceServers: getIceServers(),
+            iceServers: ICE_SERVERS,
             iceTransportPolicy: 'all',
             bundlePolicy: 'max-bundle',
             rtcpMuxPolicy: 'require'
@@ -286,18 +307,17 @@ async function _checkStreamStatus() {
     }
 }
 
+function _updateStatusIndicators(updateFn) {
+    document.querySelectorAll('.button_play img[streamname]').forEach(updateFn);
+}
+
 function _updateChannelStatusIndicators() {
-    const channelButtons = document.querySelectorAll('.button_play img');
-    channelButtons.forEach(img => {
+    _updateStatusIndicators(img => {
         const streamName = img.getAttribute('streamname');
         const status = window.streamStatus && window.streamStatus[streamName];
         
-        if (status) {
-            if (status.active) {
-                img.style.border = '3px solid var(--caution-color)';
-            } else {
-                img.style.border = '3px solid var(--secondary-color)';
-            }
+        if (status && status.active) {
+            img.style.border = '3px solid var(--caution-color)';
         } else {
             img.style.border = '3px solid var(--secondary-color)';
         }
@@ -305,8 +325,7 @@ function _updateChannelStatusIndicators() {
 }
 
 function _setAllStatusUnknown() {
-    const channelButtons = document.querySelectorAll('.button_play img');
-    channelButtons.forEach(img => {
+    _updateStatusIndicators(img => {
         img.style.border = '3px solid var(--secondary-color)';
     });
 }
@@ -364,54 +383,9 @@ function _startStats() {
     }, 1000);
 }
 
-async function connect_JOYG() {
-    try {
-        window.whepUrl_ref = whepUrl_JOYG;
-        connect_play();
-    } catch (error) {
-        updateStatus('连接失败: ');
-        console.error('连接 JOYG 错误:');
-    }
-}
-
-async function connect_PL() {
-    try {
-        window.whepUrl_ref = whepUrl_PL;
-        connect_play();
-    } catch (error) {
-        updateStatus('连接失败: ');
-        console.error('连接 PL 错误:');
-    }
-}
-
-async function connect_CMHH() {
-    try {
-        window.whepUrl_ref = whepUrl_CMHH;
-        connect_play();
-    } catch (error) {
-        updateStatus('连接失败: ');
-        console.error('连接 CMHH 错误:');
-    }
-}
-
-async function connect_LJY() {
-    try {
-        window.whepUrl_ref = whepUrl_LJY;
-        connect_play();
-    } catch (error) {
-        updateStatus('连接失败: ');
-        console.error('连接 LJY 错误:');
-    }
-}
-
-async function connect_aaa() {
-    try {
-        window.whepUrl_ref = whepUrl_aaa;
-        connect_play();
-    } catch (error) {
-        updateStatus('连接失败: ');
-        console.error('连接 aaa 错误:');
-    }
+function connect(streamName) {
+    window.whepUrl_ref = getWhepUrl(streamName);
+    connect_play();
 }
 
 function disconnect() {

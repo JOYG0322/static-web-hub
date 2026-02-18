@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <title>DeerTube-鹿管</title>
-    <link rel="stylesheet" href="css/deertube.css">
+    <link rel="stylesheet" href="css/deertube.css?v=4.3.2">
 </head>
 <body>
     <div class="browser-warning" id="browserWarning"></div>
     
     <div class="container">
-        <div class="title_"><img src="../assets/icon.png" class="logo"><div class="word"> DeerTube</div></div>
+        <div class="title_"><img src="../assets/icon.webp" class="logo"><div class="word"> DeerTube</div></div>
         <div class="search_">
             <select id="Protocol" name="Protocol" class="Protocol">
                 <option value="http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=">WHEP</option>
@@ -33,15 +33,15 @@
             </div>
         </div>
         <div class="buttons">
-            <button onclick="connect_CMHH()" class="button_play"><img src="../assets/cmhh.jpg" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
-            <button onclick="connect_JOYG()" class="button_play"><img src="../assets/joyg.jpg" class="head_img" streamname="JOYG">[直播]JOYG</button>
-            <button onclick="connect_PL()" class="button_play"><img src="../assets/pl.jpg" class="head_img" streamname="PL">[直播]Pure1ove</button>
-            <button onclick="connect_LJY()" class="button_play"><img src="../assets/ljy.jpg" class="head_img" streamname="LJY">[直播]DJ_Hero</button>
-            <button onclick="connect_aaa()" class="button_play"><img src="../assets/aaa.jpg" class="head_img" streamname="aaa">[直播]REDguard</button>
+            <button onclick="connect('CMHH')" class="button_play"><img src="../assets/cmhh.webp" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
+            <button onclick="connect('JOYG')" class="button_play"><img src="../assets/joyg.webp" class="head_img" streamname="JOYG">[直播]JOYG</button>
+            <button onclick="connect('PL')" class="button_play"><img src="../assets/pl.webp" class="head_img" streamname="PL">[直播]Pure1ove</button>
+            <button onclick="connect('LJY')" class="button_play"><img src="../assets/ljy.webp" class="head_img" streamname="LJY">[直播]DJ_Hero</button>
+            <button onclick="connect('AAA')" class="button_play"><img src="../assets/aaa.webp" class="head_img" streamname="AAA">[直播]REDguard</button>
         </div>
     </div>
     
-    <script src="adapter.js"></script>
-    <script src="js/deertube.js"></script>
+    <script src="adapter.js?v=4.3.2"></script>
+    <script src="js/deertube.js?v=4.3.2"></script>
 </body>
 </html>

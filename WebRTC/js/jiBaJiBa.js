@@ -38,11 +38,11 @@ class JiBaJiBaPlayer {
         this.currentServer = this.serverSelect ? this.serverSelect.value : '10.126.126.15';
 
         this.presetChannels = [
-            { name: '[直播] JOYG', img: '../assets/joyg.jpg', stream: 'JOYG' },
-            { name: '[直播] CMHH', img: '../assets/cmhh.jpg', stream: 'CMHH' },
-            { name: '[直播] Pure1ove', img: '../assets/pl.jpg', stream: 'PL' },
-            { name: '[直播] DJ_Hero', img: '../assets/ljy.jpg', stream: 'LJY' },
-            { name: '[直播] REDguard', img: '../assets/aaa.jpg', stream: 'AAA' }
+            { name: '[直播] JOYG', img: '../assets/joyg.webp', stream: 'JOYG' },
+            { name: '[直播] CMHH', img: '../assets/cmhh.webp', stream: 'CMHH' },
+            { name: '[直播] Pure1ove', img: '../assets/pl.webp', stream: 'PL' },
+            { name: '[直播] DJ_Hero', img: '../assets/ljy.webp', stream: 'LJY' },
+            { name: '[直播] REDguard', img: '../assets/aaa.webp', stream: 'AAA' }
         ];
 
         this._initTheme();
