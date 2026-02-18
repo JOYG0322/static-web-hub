@@ -3,6 +3,15 @@ let isFullscreen = false;
 let fullscreenTimeout = null;
 window.whepUrl_ref = '';
 
+// 重连机制相关变量
+let reconnectAttempts = 0;
+let maxReconnectAttempts = 5;
+let reconnectDelay = 1000;
+let maxReconnectDelay = 30000;
+let reconnectTimer = null;
+let isManualDisconnect = false;
+let isConnected = false;
+
 const ICE_SERVERS = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
@@ -94,7 +103,6 @@ function toggleFullscreen() {
         const controlsDiv = document.createElement('div');
         controlsDiv.className = 'fullscreen-controls';
         controlsDiv.innerHTML = `
-            <button onclick="disconnect()">断开</button>
             <button onclick="toggleFullscreen()">退出全屏</button>
         `;
         
@@ -114,15 +122,36 @@ function toggleFullscreen() {
         isFullscreen = true;
         fullscreenBtn.textContent = '退出全屏';
         
-        fullscreenTimeout = setTimeout(() => controlsDiv.classList.add('hidden'), 1000);
-        fullscreenDiv.addEventListener('mousemove', () => {
-            controlsDiv.classList.remove('hidden');
-            clearTimeout(fullscreenTimeout);
-            fullscreenTimeout = setTimeout(() => controlsDiv.classList.add('hidden'), 1200);
+        // 初始状态：控件隐藏
+        controlsDiv.classList.add('hidden');
+        
+        fullscreenDiv.addEventListener('mousemove', (e) => {
+            // 获取全屏容器的高度
+            const containerHeight = fullscreenDiv.clientHeight;
+            // 计算上方1/3区域的边界
+            const topThirdBoundary = containerHeight / 4;
+            
+            // 获取鼠标在容器内的Y坐标
+            const mouseY = e.clientY - fullscreenDiv.getBoundingClientRect().top;
+            
+            // 只有当鼠标在上方1/3区域内时才显示控件
+            if (mouseY <= topThirdBoundary) {
+                // 显示控件（添加show类，移除hidden类）
+                controlsDiv.classList.remove('hidden');
+                controlsDiv.classList.add('show');
+                clearTimeout(fullscreenTimeout);
+                fullscreenTimeout = setTimeout(() => {
+                    controlsDiv.classList.remove('show');
+                    controlsDiv.classList.add('hidden');
+                }, 1200);
+            }
         });
         controlsDiv.addEventListener('mouseleave', () => {
             clearTimeout(fullscreenTimeout);
-            fullscreenTimeout = setTimeout(() => controlsDiv.classList.add('hidden'), 1200);
+            fullscreenTimeout = setTimeout(() => {
+                controlsDiv.classList.remove('show');
+                controlsDiv.classList.add('hidden');
+            }, 1200);
         });
         
         updateStatus('已进入网页全屏模式');
@@ -169,12 +198,12 @@ document.addEventListener('keydown', function(e) {
 
 async function connect_play() {
     try {
-        updateStatus('正在连接');
+        updateStatus('正在连接服务器');
         
         disconnect();
         const selectedStream = window.whepUrl_ref.split('=').pop();
         if (window.streamStatus && !window.streamStatus[selectedStream]?.active) {
-            updateStatus('警告：该频道当前可能没有直播流');
+            updateStatus('正在连接服务器');
         }
         
         pc = new RTCPeerConnection({
@@ -202,14 +231,28 @@ async function connect_play() {
             updateStatus('连接状态: ' + state);
             
             if (state === 'connected') {
-                updateStatus('连接成功！');
+                updateStatus('服务器连接成功！');
             } else if (state === 'failed') {
                 updateStatus('连接失败，请重试或使用 Chrome 浏览器');
             }
         };
         
         pc.oniceconnectionstatechange = () => {
-            updateStatus('ICE连接状态: ' + pc.iceConnectionState);
+            const state = pc.iceConnectionState;
+            updateStatus('ICE连接状态: ' + state);
+            
+            if (state === 'connected' || state === 'completed') {
+                isConnected = true;
+                reconnectAttempts = 0;
+                reconnectDelay = 1000;
+                updateStatus('ICE连接成功');
+            } else if (state === 'failed') {
+                updateStatus('ICE连接失败，准备重连...');
+                _attemptReconnect();
+            } else if (state === 'disconnected') {
+                updateStatus('ICE连接断开，等待恢复...');
+                _waitForIceRecovery();
+            }
         };
         
         pc.onicegatheringstatechange = () => {
@@ -241,7 +284,7 @@ async function connect_play() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
             
-            const response = await fetch(whepUrl_ref, {
+            const response = await fetch(window.whepUrl_ref, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/sdp'
@@ -266,7 +309,7 @@ async function connect_play() {
             
         } catch (error) {
             if (error.name === 'AbortError') {
-                throw new Error('连接超时，请检查网络或服务器状态');
+                throw new Error('连接服务器超时，请检查网络或服务器状态');
             }
             throw error;
         }
@@ -377,7 +420,12 @@ function _startStats() {
                 }
             });
             
-            updateStatus(`码率: ${bitrate}Mbps | FPS: ${fps} `);
+            // 判断码率或帧率是否为0，如果为0则显示"无信号"
+            if (parseFloat(bitrate) === 0 || parseFloat(fps) === 0) {
+                updateStatus('无信号');
+            } else {
+                updateStatus(`Linking 码率: ${bitrate}Mbps | FPS: ${fps} `);
+            }
         } catch (e) {
         }
     }, 1000);
@@ -385,14 +433,58 @@ function _startStats() {
 
 function connect(streamName) {
     window.whepUrl_ref = getWhepUrl(streamName);
+    
+    // 更新头像和streamname显示
+    const headNow = document.getElementById('head_now');
+    const playInfos = document.getElementById('playinfos');
+    
+    if (headNow && playInfos) {
+        // 根据streamName设置对应的头像
+        const avatarMap = {
+            'CMHH': 'cmhh',
+            'JOYG': 'joyg', 
+            'PL': 'pl',
+            'LJY': 'ljy',
+            'AAA': 'aaa'
+        };
+        
+        const displayNameMap = {
+            'CMHH': 'Chaoji_Mouse',
+            'JOYG': 'JOYG',
+            'PL': 'Pure1ove',
+            'LJY': 'DJ_Hero',
+            'AAA': 'REDguard'
+        };
+        
+        const avatarName = avatarMap[streamName];
+        if (avatarName) {
+            headNow.src = `../assets/${avatarName}.webp`;
+        }
+        
+        const displayName = displayNameMap[streamName];
+        if (displayName) {
+            playInfos.textContent = displayName;
+        }
+    }
+    
     connect_play();
 }
 
 function disconnect() {
+    isManualDisconnect = true;
+    isConnected = false;
+    
+    if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+    }
+    reconnectAttempts = 0;
+    reconnectDelay = 1000;
+    
     if (pc) {
         pc.close();
         pc = null;
-        updateStatus('已断开连接');
+        updateStatus('当前未连接');
         document.getElementById('remoteVideo').srcObject = null;
         
         if (statsInterval) {
@@ -417,7 +509,7 @@ async function connect_URL() {
         var room = getTextBoxValue();
         var userUrl = pro + room;
         if (!userUrl) {
-            updateStatus('请输入房间号');
+            updateStatus('房间号');
             return;
         }
         
@@ -428,3 +520,263 @@ async function connect_URL() {
         console.error('连接 URL 错误:', error);
     }
 }
+
+// 重连机制函数
+function _waitForIceRecovery() {
+    if (isManualDisconnect) return;
+    
+    let checkCount = 0;
+    const maxChecks = 10;
+    
+    const checkInterval = setInterval(() => {
+        if (isManualDisconnect || !pc) {
+            clearInterval(checkInterval);
+            return;
+        }
+        
+        const state = pc.iceConnectionState;
+        if (state === 'connected' || state === 'completed') {
+            clearInterval(checkInterval);
+            updateStatus('ICE连接已恢复');
+            return;
+        }
+        
+        checkCount++;
+        if (checkCount >= maxChecks || state === 'failed') {
+            clearInterval(checkInterval);
+            updateStatus('ICE恢复失败，准备重连...');
+            _attemptReconnect();
+        }
+    }, 500);
+}
+
+function _attemptReconnect() {
+    if (isManualDisconnect) {
+        console.log('用户主动断开，不进行重连');
+        return;
+    }
+    
+    if (reconnectAttempts >= maxReconnectAttempts) {
+        updateStatus(`重连失败，已达最大重试次数(${maxReconnectAttempts})`);
+        console.log('已达最大重连次数');
+        return;
+    }
+    
+    if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+    }
+    
+    reconnectAttempts++;
+    const delay = Math.min(reconnectDelay * Math.pow(2, reconnectAttempts - 1), maxReconnectDelay);
+    
+    updateStatus(`第${reconnectAttempts}次重连，${Math.round(delay/1000)}秒后尝试...`);
+    console.log(`第${reconnectAttempts}次重连，延迟${delay}ms`);
+    
+    reconnectTimer = setTimeout(async () => {
+        if (isManualDisconnect) return;
+        
+        if (!window.whepUrl_ref) {
+            updateStatus('无法重连：没有有效的URL');
+            return;
+        }
+        
+        try {
+            await _doReconnect();
+        } catch (e) {
+            console.error('重连失败:', e);
+            _attemptReconnect();
+        }
+    }, delay);
+}
+
+async function _doReconnect() {
+    // 清理旧的PeerConnection
+    if (pc) {
+        try {
+            pc.ontrack = null;
+            pc.oniceconnectionstatechange = null;
+            pc.close();
+        } catch (e) {}
+        pc = null;
+    }
+    
+    if (statsInterval) {
+        clearInterval(statsInterval);
+        statsInterval = null;
+    }
+    
+    // 创建新的PeerConnection
+    pc = new RTCPeerConnection({
+        iceServers: ICE_SERVERS,
+        iceTransportPolicy: 'all',
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
+    });
+    
+    pc.ontrack = e => {
+        updateStatus('已接收到视频流');
+        const remoteVideo = document.getElementById('remoteVideo');
+        remoteVideo.srcObject = e.streams[0];
+        
+        if (navigator.userAgent.includes('Firefox')) {
+            remoteVideo.play().catch(err => {
+                console.warn('Firefox 自动播放被阻止:', err);
+                updateStatus('Firefox: 请点击视频播放按钮');
+            });
+        }
+        
+        updateStatus('重连成功 · 正在接收视频');
+        reconnectAttempts = 0;
+        reconnectDelay = 1000;
+    };
+    
+    pc.onconnectionstatechange = () => {
+        const state = pc.connectionState;
+        updateStatus('连接状态: ' + state);
+        
+        if (state === 'connected') {
+            updateStatus('连接成功！');
+        } else if (state === 'failed') {
+            updateStatus('连接失败，请重试或使用 Chrome 浏览器');
+        }
+    };
+    
+    pc.oniceconnectionstatechange = () => {
+        const state = pc.iceConnectionState;
+        updateStatus('ICE连接状态: ' + state);
+        
+        if (state === 'connected' || state === 'completed') {
+            isConnected = true;
+            reconnectAttempts = 0;
+            reconnectDelay = 1000;
+            updateStatus('ICE连接成功');
+        } else if (state === 'failed') {
+            updateStatus('ICE连接失败，准备重连...');
+            _attemptReconnect();
+        } else if (state === 'disconnected') {
+            updateStatus('ICE连接断开，等待恢复...');
+            _waitForIceRecovery();
+        }
+    };
+    
+    pc.onicegatheringstatechange = () => {
+        console.log('ICE gathering state:', pc.iceGatheringState);
+    };
+    
+    pc.onicecandidate = (event) => {
+        if (event.candidate) {
+            console.log('ICE candidate:', event.candidate.candidate);
+        } else {
+            console.log('ICE gathering complete');
+        }
+    };
+    
+    const transceiverVideo = pc.addTransceiver('video', { direction: 'recvonly' });
+    const transceiverAudio = pc.addTransceiver('audio', { direction: 'recvonly' });
+    
+    try {
+        const offer = await pc.createOffer();
+        
+        let sdp = offer.sdp;
+        
+        if (navigator.userAgent.includes('Firefox')) {
+            sdp = sdp.replace(/a=group:BUNDLE 0 1/g, 'a=group:BUNDLE 0');
+        }
+        
+        await pc.setLocalDescription({ type: 'offer', sdp: sdp });
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(window.whepUrl_ref, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/sdp'
+            },
+            body: sdp,
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const answerSdp = await response.text();
+        await pc.setRemoteDescription({
+            type: 'answer',
+            sdp: answerSdp
+        });
+        
+        updateStatus('重连建立成功，等待视频流...');
+        _startStats();
+        
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error('重连超时，请检查网络或服务器状态');
+        }
+        throw error;
+    }
+}
+
+// 重连配置管理函数
+function openReconnectModal() {
+    const modal = document.getElementById('reconnectModal');
+    const inputMaxAttempts = document.getElementById('inputMaxAttempts');
+    const inputReconnectDelay = document.getElementById('inputReconnectDelay');
+    const inputMaxDelay = document.getElementById('inputMaxDelay');
+
+    inputMaxAttempts.value = maxReconnectAttempts;
+    inputReconnectDelay.value = reconnectDelay;
+    inputMaxDelay.value = maxReconnectDelay;
+
+    modal.classList.add('active');
+}
+
+function closeReconnectModal() {
+    const modal = document.getElementById('reconnectModal');
+    modal.classList.remove('active');
+}
+
+function saveReconnectConfig() {
+    const inputMaxAttempts = document.getElementById('inputMaxAttempts');
+    const inputReconnectDelay = document.getElementById('inputReconnectDelay');
+    const inputMaxDelay = document.getElementById('inputMaxDelay');
+
+    maxReconnectAttempts = parseInt(inputMaxAttempts.value) || 5;
+    reconnectDelay = parseInt(inputReconnectDelay.value) || 1000;
+    maxReconnectDelay = parseInt(inputMaxDelay.value) || 30000;
+
+    console.log(`重连配置已更新: 最大次数=${maxReconnectAttempts}, 初始延迟=${reconnectDelay}ms, 最大延迟=${maxReconnectDelay}ms`);
+    updateStatus(`重连配置已保存: 最大${maxReconnectAttempts}次, 延迟${reconnectDelay}-${maxReconnectDelay}ms`);
+    closeReconnectModal();
+}
+
+// 绑定模态框事件
+document.addEventListener('DOMContentLoaded', function() {
+    const modalClose = document.getElementById('modalClose');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalSave = document.getElementById('modalSave');
+    const reconnectModal = document.getElementById('reconnectModal');
+    
+    if (modalClose) {
+        modalClose.addEventListener('click', closeReconnectModal);
+    }
+    
+    if (modalCancel) {
+        modalCancel.addEventListener('click', closeReconnectModal);
+    }
+    
+    if (modalSave) {
+        modalSave.addEventListener('click', saveReconnectConfig);
+    }
+    
+    if (reconnectModal) {
+        reconnectModal.addEventListener('click', (e) => {
+            if (e.target.id === 'reconnectModal') {
+                closeReconnectModal();
+            }
+        });
+    }
+});

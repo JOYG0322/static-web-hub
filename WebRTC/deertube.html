@@ -3,18 +3,15 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>DeerTube-鹿管</title>
+    <title>DeerTube Linking</title>
     <link rel="stylesheet" href="css/deertube.css?v=4.3.2">
 </head>
 <body>
     <div class="browser-warning" id="browserWarning"></div>
     
     <div class="container">
-        <div class="title_"><img src="../assets/icon.webp" class="logo"><div class="word"> DeerTube</div></div>
+        <div class="title_"><img src="../assets/icon.webp" class="logo"><div class="word"> DeerTube</div><div class="subtitle">Linking</div></div>
         <div class="search_">
-            <select id="Protocol" name="Protocol" class="Protocol">
-                <option value="http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=">WHEP</option>
-            </select>
             <div class="search__">
                 <input type="text" placeholder="输入房间号" id="userenter" value="" class="text_enter">
                 <button onclick="connect_URL()" class="button_s">连接</button>
@@ -27,10 +24,21 @@
             <video id="remoteVideo" autoplay controls muted playsinline class="player"></video>
             <div class="status" id="status">未连接</div>
             <div class="controls">
+                <div class="headinfo" id="headinfo">
+                    <img class="head_now" id="head_now" src="../assets/icon.webp">
+                    <div class="namec" id="namec">
+                        <div class="playinfos" id="playinfos">超马研究</div>
+                        <div class="links" id="links">Linking</div>
+                    </div>
+                </div>
                 <button onclick="connect_play()" class="button_l">刷新</button>
                 <button onclick="disconnect()" class="button_r">断开</button>
                 <button onclick="toggleFullscreen()" class="button_r pc">全屏</button>
             </div>
+            <div class="stabg" id="stabg">
+                <div class="infos" id="infos"></div>
+            </div>
+            
         </div>
         <div class="buttons">
             <button onclick="connect('CMHH')" class="button_play"><img src="../assets/cmhh.webp" class="head_img" streamname="CMHH">[直播]Chaoji_Mouse</button>
@@ -38,6 +46,35 @@
             <button onclick="connect('PL')" class="button_play"><img src="../assets/pl.webp" class="head_img" streamname="PL">[直播]Pure1ove</button>
             <button onclick="connect('LJY')" class="button_play"><img src="../assets/ljy.webp" class="head_img" streamname="LJY">[直播]DJ_Hero</button>
             <button onclick="connect('AAA')" class="button_play"><img src="../assets/aaa.webp" class="head_img" streamname="AAA">[直播]REDguard</button>
+        </div>
+    </div>
+    
+    <!-- 重连配置模态框未调用暂存备用 -->
+    <div class="modal-overlay" id="reconnectModal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span>自动重连配置</span>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-row">
+                <label class="modal-label">最大重连次数</label>
+                <input type="number" class="modal-input" id="inputMaxAttempts" min="1" max="20" value="5">
+                <span class="modal-hint">次</span>
+            </div>
+            <div class="modal-row">
+                <label class="modal-label">初始重连延迟</label>
+                <input type="number" class="modal-input" id="inputReconnectDelay" min="500" max="10000" step="500" value="1000">
+                <span class="modal-hint">毫秒</span>
+            </div>
+            <div class="modal-row">
+                <label class="modal-label">最大重连延迟</label>
+                <input type="number" class="modal-input" id="inputMaxDelay" min="5000" max="120000" step="5000" value="30000">
+                <span class="modal-hint">毫秒</span>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="modalCancel">取消</button>
+                <button class="modal-btn modal-btn-save" id="modalSave">保存</button>
+            </div>
         </div>
     </div>
     
