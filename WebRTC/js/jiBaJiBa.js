@@ -1,8 +1,11 @@
 class JiBaJiBaPlayer {
     constructor() {
         this.pc = null;
+        this.pc2 = null;
         this.currentUrl = null;
+        this.currentUrl2 = null;
         this.statsInterval = null;
+        this.statsInterval2 = null;
         this.isFullscreen = false;
         this.fullscreenTimeout = null;
 
@@ -26,16 +29,27 @@ class JiBaJiBaPlayer {
         this.audioBarFill = document.getElementById('audioBarFill');
         this.audioWave = document.getElementById('audioWave');
         this.audioWaveBars = this.audioWave?.querySelectorAll('.wave-bar');
-        this.audioVisualSelect = document.getElementById('audioVisualSelect');
-        this.audioVisualMode = 'none';
+        this.audioVisualMode = localStorage.getItem('audioVisualMode') || 'none';
+        
+        this.video2 = document.getElementById('remoteVideo2');
+        this.statusEl2 = document.getElementById('status2');
+        this.qualityIndicator2 = document.getElementById('qualityIndicator2');
+        this.qualityText2 = this.qualityIndicator2?.querySelector('.quality-text');
+        this.audioBar2 = document.getElementById('audioBar2');
+        this.audioBarFill2 = document.getElementById('audioBarFill2');
+        this.audioWave2 = document.getElementById('audioWave2');
+        this.audioWaveBars2 = this.audioWave2?.querySelectorAll('.wave-bar');
+        
+        this.audioStatus2 = document.getElementById('audioStatus2');
+        this.audioJitter2 = document.getElementById('audioJitter2');
+        this.audioSampleRate2 = document.getElementById('audioSampleRate2');
         this.fullscreenBtn = document.getElementById('fullscreenBtn');
         this.roomInput = document.getElementById('roomInput');
         this.presetContainer = document.getElementById('presetContainer');
         this.historyContainer = document.getElementById('historyContainer');
-        this.serverSelect = document.getElementById('serverSelect');
-        this.rememberChannelCheckbox = document.getElementById('rememberChannel');
-        this.autoChannelSelect = document.getElementById('autoChannelSelect');
-        this.currentServer = this.serverSelect ? this.serverSelect.value : '10.126.126.15';
+        this.currentServer = '10.126.126.15';
+        this.checkOnlineBeforeConnect = localStorage.getItem('checkOnlineBeforeConnect') !== 'false';
+        this.connectionTarget = 'main';
 
         this.presetChannels = [
             { name: '[直播] JOYG', img: '../assets/joyg.webp', stream: 'JOYG' },
@@ -51,6 +65,7 @@ class JiBaJiBaPlayer {
         this._loadHistory();
         this._initStreamStatus();
         this._loadRememberSettings();
+        this._updateAudioVisualDisplay();
         this.updateStatus('就绪 - 点击频道或输入房间号开始播放');
     }
 
@@ -137,8 +152,37 @@ class JiBaJiBaPlayer {
         document.getElementById('disconnectBtn').addEventListener('click', () => this.disconnect());
         if (this.fullscreenBtn) this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
 
-        const reconnectConfigBtn = document.getElementById('reconnectConfigBtn');
-        if (reconnectConfigBtn) reconnectConfigBtn.addEventListener('click', () => this.openReconnectModal());
+        const splitScreenBtn = document.getElementById('splitScreenBtn');
+        if (splitScreenBtn) splitScreenBtn.addEventListener('click', () => this.toggleSplitScreen());
+
+        const closeSplitBtn = document.getElementById('closeSplitBtn');
+        if (closeSplitBtn) closeSplitBtn.addEventListener('click', () => this.closeSplitScreen());
+
+        const refreshBtn2 = document.getElementById('refreshBtn2');
+        if (refreshBtn2) refreshBtn2.addEventListener('click', () => this.refresh2());
+
+        const disconnectBtn2 = document.getElementById('disconnectBtn2');
+        if (disconnectBtn2) disconnectBtn2.addEventListener('click', () => this.disconnect2());
+
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) settingsBtn.addEventListener('click', () => this.openSettingsPanel());
+
+        const settingsPanelClose = document.getElementById('settingsPanelClose');
+        if (settingsPanelClose) settingsPanelClose.addEventListener('click', () => this.closeSettingsPanel());
+
+        const settingsPanelOverlay = document.getElementById('settingsPanelOverlay');
+        if (settingsPanelOverlay) settingsPanelOverlay.addEventListener('click', () => this.closeSettingsPanel());
+
+        const aboutLink = document.getElementById('aboutLink');
+        if (aboutLink) aboutLink.addEventListener('click', () => this.openAboutModal());
+
+        const aboutModalClose = document.getElementById('aboutModalClose');
+        if (aboutModalClose) aboutModalClose.addEventListener('click', () => this.closeAboutModal());
+
+        const aboutModal = document.getElementById('aboutModal');
+        if (aboutModal) aboutModal.addEventListener('click', (e) => {
+            if (e.target === aboutModal) this.closeAboutModal();
+        });
 
         const clearHistoryBtn = document.getElementById('clearHistoryBtn');
         if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', () => this.clearHistory());
@@ -148,6 +192,14 @@ class JiBaJiBaPlayer {
 
         const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
         if (refreshHistoryBtn) refreshHistoryBtn.addEventListener('click', () => this.refreshHistoryStatus());
+
+        document.querySelectorAll('.target-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.connectionTarget = btn.dataset.target;
+            });
+        });
 
         if (this.themeBtn) {
             this.themeBtn.addEventListener('click', (e) => {
@@ -171,25 +223,6 @@ class JiBaJiBaPlayer {
                 this.themeDropdown.classList.remove('show');
             }
         });
-
-        if (this.serverSelect) {
-            this.serverSelect.addEventListener('change', (e) => {
-                this.currentServer = e.target.value;
-                if (window.StreamStatusManager) {
-                    window.StreamStatusManager.setServer(this.currentServer);
-                    window.StreamStatusManager.fetchStatus();
-                }
-                this._loadPresetChannels();
-                this.updateStatus(`已切换到服务器: ${this.currentServer}`);
-            });
-        }
-
-        if (this.audioVisualSelect) {
-            this.audioVisualSelect.addEventListener('change', (e) => {
-                this.audioVisualMode = e.target.value;
-                this._updateAudioVisualDisplay();
-            });
-        }
 
         this.roomInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.connectRoom(); });
 
@@ -233,6 +266,11 @@ class JiBaJiBaPlayer {
 
     _buildStreamUrl(stream) {
         return `http://${this.currentServer}:1985/rtc/v1/whep/?app=live&stream=${stream}`;
+    }
+
+    _extractStreamName(url) {
+        const match = url.match(/stream=([^&]+)/);
+        return match ? match[1] : null;
     }
 
     _createChannelButton(name, img, url, manual = false) {
@@ -341,29 +379,23 @@ class JiBaJiBaPlayer {
     }
 
     _loadRememberSettings() {
+        const savedSettings = localStorage.getItem('jiBaJiBa_settings');
+        if (savedSettings) {
+            try {
+                const settings = JSON.parse(savedSettings);
+                this.currentServer = settings.server || '10.126.126.15';
+                this.rememberChannel = settings.rememberChannel || false;
+                this.autoChannel = settings.autoChannel || '';
+                this.maxReconnectAttempts = settings.maxReconnectAttempts || 5;
+                this.reconnectDelay = settings.reconnectDelay || 1000;
+                this.maxReconnectDelay = settings.maxReconnectDelay || 30000;
+            } catch (e) {
+                console.log('加载设置失败');
+            }
+        }
+        
         const rememberEnabled = localStorage.getItem('jibajiba_remember') === 'true';
         const savedAutoChannel = localStorage.getItem('jibajiba_auto_channel') || '';
-        
-        if (this.rememberChannelCheckbox) {
-            this.rememberChannelCheckbox.checked = rememberEnabled;
-            this.rememberChannelCheckbox.addEventListener('change', () => {
-                localStorage.setItem('jibajiba_remember', this.rememberChannelCheckbox.checked);
-                if (this.autoChannelSelect) {
-                    this.autoChannelSelect.disabled = this.rememberChannelCheckbox.checked;
-                }
-                if (!this.rememberChannelCheckbox.checked) {
-                    this._clearSavedChannel();
-                }
-            });
-        }
-        
-        if (this.autoChannelSelect) {
-            this.autoChannelSelect.value = savedAutoChannel;
-            this.autoChannelSelect.disabled = rememberEnabled;
-            this.autoChannelSelect.addEventListener('change', () => {
-                localStorage.setItem('jibajiba_auto_channel', this.autoChannelSelect.value);
-            });
-        }
         
         if (rememberEnabled) {
             const savedChannel = localStorage.getItem('jibajiba_last_channel');
@@ -398,7 +430,7 @@ class JiBaJiBaPlayer {
     }
 
     _saveCurrentChannel() {
-        if (this.currentUrl && this.rememberChannelCheckbox?.checked) {
+        if (this.currentUrl && this.rememberChannel) {
             localStorage.setItem('jibajiba_last_channel', this.currentUrl);
         }
     }
@@ -463,6 +495,10 @@ class JiBaJiBaPlayer {
         if (this.currentUrl) this.connectStream(this.currentUrl);
     }
 
+    refresh2() {
+        if (this.currentUrl2) this.connectStream2(this.currentUrl2);
+    }
+
     disconnect() {
         this.isManualDisconnect = true;
         this.isConnected = false;
@@ -510,9 +546,39 @@ class JiBaJiBaPlayer {
         if (this.audioWaveBars) {
             this.audioWaveBars.forEach(bar => bar.style.height = '2px');
         }
+        if (this.audioStatus2) this.audioStatus2.textContent = '音频: --';
+        if (this.audioJitter2) this.audioJitter2.textContent = '抖动: --';
+        if (this.audioSampleRate2) this.audioSampleRate2.textContent = '采样率: --';
+        if (this.audioBarFill2) this.audioBarFill2.style.width = '0%';
+        if (this.audioWaveBars2) {
+            this.audioWaveBars2.forEach(bar => bar.style.height = '2px');
+        }
     }
 
-    async connectStream(url) {
+    async connectStream(url, skipOnlineCheck = false) {
+        if (this.connectionTarget === 'split') {
+            await this.connectStream2(url, skipOnlineCheck);
+            return;
+        }
+        
+        if (this.checkOnlineBeforeConnect && !skipOnlineCheck) {
+            const streamName = this._extractStreamName(url);
+            if (streamName && window.StreamStatusManager) {
+                this.updateStatus('正在检测频道在线状态...');
+                try {
+                    const isOnline = await window.StreamStatusManager.checkSingleStatus(streamName);
+                    if (!isOnline) {
+                        this.updateStatus('频道离线，无法连接');
+                        console.log(`[连接检测] 频道 ${streamName} 离线，取消连接`);
+                        return;
+                    }
+                    console.log(`[连接检测] 频道 ${streamName} 在线，继续连接`);
+                } catch (e) {
+                    console.log(`[连接检测] 检测失败，直接连接: ${e.message}`);
+                }
+            }
+        }
+        
         this.disconnect();
         this.isManualDisconnect = false;
         this.currentUrl = url;
@@ -566,6 +632,131 @@ class JiBaJiBaPlayer {
             console.error('连接失败', e);
             this.updateStatus(`连接失败: ${e.message}`);
             this.disconnect();
+        }
+    }
+
+    async connectStream2(url, skipOnlineCheck = false) {
+        if (this.checkOnlineBeforeConnect && !skipOnlineCheck) {
+            const streamName = this._extractStreamName(url);
+            if (streamName && window.StreamStatusManager) {
+                this.updateStatus2('正在检测频道在线状态...');
+                try {
+                    const isOnline = await window.StreamStatusManager.checkSingleStatus(streamName);
+                    if (!isOnline) {
+                        this.updateStatus2('频道离线，无法连接');
+                        console.log(`[连接检测] 分屏频道 ${streamName} 离线，取消连接`);
+                        return;
+                    }
+                    console.log(`[连接检测] 分屏频道 ${streamName} 在线，继续连接`);
+                } catch (e) {
+                    console.log(`[连接检测] 检测失败，直接连接: ${e.message}`);
+                }
+            }
+        }
+        
+        this.disconnect2();
+        this.currentUrl2 = url;
+        this.updateStatus2('正在连接...');
+
+        try {
+            this.pc2 = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+            this.pc2.addTransceiver('video', { direction: 'recvonly' });
+            this.pc2.addTransceiver('audio', { direction: 'recvonly' });
+
+            this.pc2.ontrack = (e) => {
+                try { this.video2.srcObject = e.streams[0]; } catch (err) {}
+                this.updateStatus2('连接成功');
+            };
+
+            this.pc2.oniceconnectionstatechange = () => {
+                if (this.pc2) {
+                    const st = this.pc2.iceConnectionState;
+                    if (st === 'failed') {
+                        this.updateStatus2('连接失败');
+                    } else if (st === 'disconnected') {
+                        this.updateStatus2('连接断开');
+                    }
+                }
+            };
+
+            const offer = await this.pc2.createOffer();
+            await this.pc2.setLocalDescription(offer);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/sdp' },
+                body: offer.sdp
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const answer = await response.text();
+            await this.pc2.setRemoteDescription({ type: 'answer', sdp: answer });
+
+            this._startStats2();
+        } catch (e) {
+            console.error('分屏连接失败', e);
+            this.updateStatus2(`连接失败: ${e.message}`);
+            this.disconnect2();
+        }
+    }
+
+    updateStatus2(text) {
+        if (this.statusEl2) this.statusEl2.textContent = text;
+    }
+
+    disconnect2() {
+        if (this.statsInterval2) { clearInterval(this.statsInterval2); this.statsInterval2 = null; }
+        if (this.pc2) {
+            this.pc2.close();
+            this.pc2 = null;
+        }
+        if (this.video2) this.video2.srcObject = null;
+        this.currentUrl2 = null;
+        this.updateStatus2('未连接');
+        if (this.qualityIndicator2) {
+            this.qualityIndicator2.classList.remove('quality-good', 'quality-medium', 'quality-poor');
+            if (this.qualityText2) this.qualityText2.textContent = '--';
+        }
+    }
+
+    _startStats2() {
+        if (this.statsInterval2) clearInterval(this.statsInterval2);
+        this.statsInterval2 = setInterval(async () => {
+            if (!this.pc2 || this.pc2.connectionState !== 'connected') return;
+            try {
+                const stats = await this.pc2.getStats();
+                let rtt = 0, loss = 0, audioLevel = 0;
+                stats.forEach(r => {
+                    if (r.type === 'candidate-pair' && r.state === 'succeeded') {
+                        if (r.currentRoundTripTime) rtt = Math.round(r.currentRoundTripTime * 1000);
+                    }
+                    if (r.type === 'inbound-rtp' && r.kind === 'video') {
+                        if (r.packetsLost) loss = r.packetsLost;
+                    }
+                    if (r.type === 'inbound-rtp' && r.kind === 'audio') {
+                        if (r.audioLevel !== undefined) audioLevel = r.audioLevel;
+                    }
+                });
+                this._updateQualityIndicator2(rtt, loss);
+                this._updateAudioVisual(audioLevel, true);
+            } catch (e) {}
+        }, 1000);
+    }
+
+    _updateQualityIndicator2(rtt, loss) {
+        if (!this.qualityIndicator2 || !this.qualityText2) return;
+        
+        this.qualityIndicator2.classList.remove('quality-good', 'quality-medium', 'quality-poor');
+        
+        if (rtt > 1000 || loss > 50) {
+            this.qualityIndicator2.classList.add('quality-poor');
+            this.qualityText2.textContent = '差';
+        } else if (rtt > 400 || loss > 30) {
+            this.qualityIndicator2.classList.add('quality-medium');
+            this.qualityText2.textContent = '中';
+        } else {
+            this.qualityIndicator2.classList.add('quality-good');
+            this.qualityText2.textContent = '优';
         }
     }
 
@@ -654,29 +845,48 @@ class JiBaJiBaPlayer {
         }
     }
 
-    _updateAudioInfo(jitter, sampleRate) {
-        if (this.audioJitter) {
-            this.audioJitter.textContent = `抖动: ${jitter ? jitter + 'ms' : '--'}`;
-        }
-        if (this.audioSampleRate) {
-            this.audioSampleRate.textContent = `采样率: ${sampleRate ? (sampleRate / 1000) + 'kHz' : '--'}`;
+    _updateAudioInfo(jitter, sampleRate, isSplit = false) {
+        if (!isSplit) {
+            if (this.audioJitter) {
+                this.audioJitter.textContent = `抖动: ${jitter ? jitter + 'ms' : '--'}`;
+            }
+            if (this.audioSampleRate) {
+                this.audioSampleRate.textContent = `采样率: ${sampleRate ? (sampleRate / 1000) + 'kHz' : '--'}`;
+            }
+        } else {
+            if (this.audioJitter2) {
+                this.audioJitter2.textContent = `抖动: ${jitter ? jitter + 'ms' : '--'}`;
+            }
+            if (this.audioSampleRate2) {
+                this.audioSampleRate2.textContent = `采样率: ${sampleRate ? (sampleRate / 1000) + 'kHz' : '--'}`;
+            }
         }
     }
 
-    _updateAudioVisual(level) {
+    _updateAudioVisual(level, isSplit = false) {
         const percentage = Math.min(100, Math.round(level * 100));
         
-        if (this.audioStatus) {
-            const statusText = level > 0.01 ? '正常' : (level > 0 ? '静音' : '--');
-            this.audioStatus.textContent = `音频: ${statusText}`;
+        if (!isSplit) {
+            if (this.audioStatus) {
+                const statusText = level > 0.01 ? '正常' : (level > 0 ? '静音' : '--');
+                this.audioStatus.textContent = `音频: ${statusText}`;
+            }
+        } else {
+            if (this.audioStatus2) {
+                const statusText = level > 0.01 ? '正常' : (level > 0 ? '静音' : '--');
+                this.audioStatus2.textContent = `音频: ${statusText}`;
+            }
         }
         
         if (this.audioVisualMode === 'none') return;
         
-        if (this.audioVisualMode === 'bar' && this.audioBarFill) {
-            this.audioBarFill.style.width = percentage + '%';
-        } else if (this.audioVisualMode === 'wave' && this.audioWaveBars) {
-            this.audioWaveBars.forEach((bar, i) => {
+        const barFill = isSplit ? this.audioBarFill2 : this.audioBarFill;
+        const waveBars = isSplit ? this.audioWaveBars2 : this.audioWaveBars;
+        
+        if (this.audioVisualMode === 'bar' && barFill) {
+            barFill.style.width = percentage + '%';
+        } else if (this.audioVisualMode === 'wave' && waveBars) {
+            waveBars.forEach((bar, i) => {
                 const randomFactor = 0.3 + Math.random() * 0.7;
                 const height = Math.max(2, percentage * randomFactor * 0.12);
                 bar.style.height = height + 'px';
@@ -687,9 +897,12 @@ class JiBaJiBaPlayer {
     _updateAudioVisualDisplay() {
         if (this.audioBar) this.audioBar.style.display = this.audioVisualMode === 'bar' ? 'block' : 'none';
         if (this.audioWave) this.audioWave.style.display = this.audioVisualMode === 'wave' ? 'flex' : 'none';
+        if (this.audioBar2) this.audioBar2.style.display = this.audioVisualMode === 'bar' ? 'block' : 'none';
+        if (this.audioWave2) this.audioWave2.style.display = this.audioVisualMode === 'wave' ? 'flex' : 'none';
         
-        if (this.audioVisualMode === 'wave' && this.audioWaveBars) {
-            this.audioWaveBars.forEach(bar => bar.style.height = '2px');
+        if (this.audioVisualMode === 'wave') {
+            if (this.audioWaveBars) this.audioWaveBars.forEach(bar => bar.style.height = '2px');
+            if (this.audioWaveBars2) this.audioWaveBars2.forEach(bar => bar.style.height = '2px');
         }
     }
 
@@ -1034,35 +1247,150 @@ class JiBaJiBaPlayer {
         }
     }
 
-    openReconnectModal() {
-        const modal = document.getElementById('reconnectModal');
-        const inputMaxAttempts = document.getElementById('inputMaxAttempts');
-        const inputReconnectDelay = document.getElementById('inputReconnectDelay');
-        const inputMaxDelay = document.getElementById('inputMaxDelay');
-
-        inputMaxAttempts.value = this.maxReconnectAttempts;
-        inputReconnectDelay.value = this.reconnectDelay;
-        inputMaxDelay.value = this.maxReconnectDelay;
-
-        modal.classList.add('active');
+    toggleSplitScreen() {
+        const wrapper = document.querySelector('.videoWrapper');
+        const video2 = document.getElementById('videoContainer2');
+        
+        if (video2.style.display === 'none') {
+            video2.style.display = 'flex';
+            wrapper.classList.add('split-mode');
+            document.getElementById('splitScreenBtn').textContent = '关闭分屏';
+        } else {
+            this.closeSplitScreen();
+        }
     }
 
-    closeReconnectModal() {
-        const modal = document.getElementById('reconnectModal');
-        modal.classList.remove('active');
+    closeSplitScreen() {
+        const wrapper = document.querySelector('.videoWrapper');
+        const video2 = document.getElementById('videoContainer2');
+        
+        this.disconnect2();
+        video2.style.display = 'none';
+        wrapper.classList.remove('split-mode');
+        document.getElementById('splitScreenBtn').textContent = '分屏';
     }
 
-    saveReconnectConfig() {
-        const inputMaxAttempts = document.getElementById('inputMaxAttempts');
-        const inputReconnectDelay = document.getElementById('inputReconnectDelay');
-        const inputMaxDelay = document.getElementById('inputMaxDelay');
+    openSettingsPanel() {
+        const panel = document.getElementById('settingsPanel');
+        const overlay = document.getElementById('settingsPanelOverlay');
+        
+        document.getElementById('settingsServerSelect').value = this.currentServer || '10.126.126.15';
+        document.getElementById('settingsCheckOnline').checked = this.checkOnlineBeforeConnect;
+        document.getElementById('settingsRememberChannel').checked = this.rememberChannel || false;
+        document.getElementById('settingsAutoChannel').value = this.autoChannel || '';
+        document.getElementById('settingsAutoChannel').disabled = this.rememberChannel || false;
+        document.getElementById('settingsMaxAttempts').value = this.maxReconnectAttempts;
+        document.getElementById('settingsReconnectDelay').value = this.reconnectDelay;
+        document.getElementById('settingsMaxDelay').value = this.maxReconnectDelay;
+        
+        this._initThemeSegment();
+        this._initAudioVisualSegment();
+        
+        const rememberCheckbox = document.getElementById('settingsRememberChannel');
+        const autoChannelSelect = document.getElementById('settingsAutoChannel');
+        
+        rememberCheckbox.onchange = () => {
+            autoChannelSelect.disabled = rememberCheckbox.checked;
+            if (rememberCheckbox.checked) {
+                autoChannelSelect.value = '';
+            }
+        };
+        
+        panel.classList.add('show');
+        overlay.classList.add('show');
+    }
 
-        this.maxReconnectAttempts = parseInt(inputMaxAttempts.value) || 5;
-        this.reconnectDelay = parseInt(inputReconnectDelay.value) || 1000;
-        this.maxReconnectDelay = parseInt(inputMaxDelay.value) || 30000;
+    _initThemeSegment() {
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        const segment = document.querySelector('.theme-segment');
+        const items = document.querySelectorAll('.theme-segment-item');
+        
+        segment.dataset.selected = currentTheme;
+        
+        items.forEach(item => {
+            const theme = item.dataset.theme;
+            item.classList.toggle('active', theme === currentTheme);
+            
+            item.onclick = () => {
+                items.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                segment.dataset.selected = theme;
+                
+                if (window.ThemeManager) {
+                    window.ThemeManager.setTheme(theme);
+                }
+            };
+        });
+    }
 
-        console.log(`重连配置已更新: 最大次数=${this.maxReconnectAttempts}, 初始延迟=${this.reconnectDelay}ms, 最大延迟=${this.maxReconnectDelay}ms`);
-        this.closeReconnectModal();
+    _initAudioVisualSegment() {
+        const currentMode = this.audioVisualMode || 'none';
+        const segment = document.querySelector('.audio-visual-segment');
+        const items = document.querySelectorAll('.audio-visual-segment-item');
+        
+        segment.dataset.selected = currentMode;
+        
+        items.forEach(item => {
+            const mode = item.dataset.visual;
+            item.classList.toggle('active', mode === currentMode);
+            
+            item.onclick = () => {
+                items.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                segment.dataset.selected = mode;
+                
+                this.audioVisualMode = mode;
+                localStorage.setItem('audioVisualMode', mode);
+                this._updateAudioVisualDisplay();
+            };
+        });
+    }
+
+    closeSettingsPanel() {
+        const panel = document.getElementById('settingsPanel');
+        const overlay = document.getElementById('settingsPanelOverlay');
+        
+        panel.classList.remove('show');
+        overlay.classList.remove('show');
+        
+        this.currentServer = document.getElementById('settingsServerSelect').value;
+        this.checkOnlineBeforeConnect = document.getElementById('settingsCheckOnline').checked;
+        this.rememberChannel = document.getElementById('settingsRememberChannel').checked;
+        this.autoChannel = document.getElementById('settingsAutoChannel').value;
+        this.maxReconnectAttempts = parseInt(document.getElementById('settingsMaxAttempts').value) || 5;
+        this.reconnectDelay = parseInt(document.getElementById('settingsReconnectDelay').value) || 1000;
+        this.maxReconnectDelay = parseInt(document.getElementById('settingsMaxDelay').value) || 30000;
+        
+        if (window.StreamStatusManager) {
+            window.StreamStatusManager.setServer(this.currentServer);
+        }
+        
+        localStorage.setItem('checkOnlineBeforeConnect', this.checkOnlineBeforeConnect);
+        localStorage.setItem('jiBaJiBa_settings', JSON.stringify({
+            server: this.currentServer,
+            rememberChannel: this.rememberChannel,
+            autoChannel: this.autoChannel,
+            maxReconnectAttempts: this.maxReconnectAttempts,
+            reconnectDelay: this.reconnectDelay,
+            maxReconnectDelay: this.maxReconnectDelay
+        }));
+        
+        localStorage.setItem('jibajiba_remember', this.rememberChannel);
+        localStorage.setItem('jibajiba_auto_channel', this.autoChannel);
+        
+        if (!this.rememberChannel) {
+            localStorage.removeItem('jibajiba_last_channel');
+        }
+    }
+
+    openAboutModal() {
+        const modal = document.getElementById('aboutModal');
+        if (modal) modal.classList.add('show');
+    }
+
+    closeAboutModal() {
+        const modal = document.getElementById('aboutModal');
+        if (modal) modal.classList.remove('show');
     }
 
     _extractStreamName(url) {
@@ -1090,10 +1418,3 @@ class JiBaJiBaPlayer {
 }
 
 window.player = new JiBaJiBaPlayer();
-
-document.getElementById('modalClose').addEventListener('click', () => window.player.closeReconnectModal());
-document.getElementById('modalCancel').addEventListener('click', () => window.player.closeReconnectModal());
-document.getElementById('modalSave').addEventListener('click', () => window.player.saveReconnectConfig());
-document.getElementById('reconnectModal').addEventListener('click', (e) => {
-    if (e.target.id === 'reconnectModal') window.player.closeReconnectModal();
-});

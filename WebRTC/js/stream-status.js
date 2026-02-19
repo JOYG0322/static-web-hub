@@ -36,7 +36,7 @@
                     return this.status;
                 }
             } catch (error) {
-                console.error('[StreamStatus] 获取流状态失败:', error);
+                console.log('[StreamStatus] 服务器未响应');
             }
             return null;
         }
@@ -52,6 +52,17 @@
 
         isOnline(streamName) {
             return this.checkStatus(streamName);
+        }
+
+        async checkSingleStatus(streamName) {
+            try {
+                const response = await fetch(`http://${this.server}:1985/api/v1/streams/${streamName}`);
+                if (!response.ok) return false;
+                const data = await response.json();
+                return data.code === 0 && data.stream && data.stream.publish && data.stream.publish.active;
+            } catch (e) {
+                return false;
+            }
         }
 
         startPolling(interval = 10000) {
