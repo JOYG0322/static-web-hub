@@ -5,7 +5,7 @@ class NetGauge {
         this.isRunning = false;
         this.results = {};
         this.history = JSON.parse(localStorage.getItem('netgauge_history') || '[]');
-        this.serverUrl = localStorage.getItem('netgauge_server') || 'http://10.126.126.15:8080';
+        this.serverUrl = localStorage.getItem('netgauge_server') || 'http://10.126.126.15:9009';
         
         this.initUI();
         this.bindEvents();
