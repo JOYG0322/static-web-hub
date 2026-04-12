@@ -47,7 +47,7 @@ class JiBaJiBaPlayer {
         this.roomInput = document.getElementById('roomInput');
         this.presetContainer = document.getElementById('presetContainer');
         this.historyContainer = document.getElementById('historyContainer');
-        this.currentServer = '10.126.126.15';
+        this.currentServer = '10.126.126.10';
         this.checkOnlineBeforeConnect = localStorage.getItem('checkOnlineBeforeConnect') !== 'false';
         this.connectionTarget = 'main';
 
@@ -383,7 +383,7 @@ class JiBaJiBaPlayer {
         if (savedSettings) {
             try {
                 const settings = JSON.parse(savedSettings);
-                this.currentServer = settings.server || '10.126.126.15';
+                this.currentServer = settings.server || '10.126.126.10';
                 this.rememberChannel = settings.rememberChannel || false;
                 this.autoChannel = settings.autoChannel || '';
                 this.maxReconnectAttempts = settings.maxReconnectAttempts || 5;
@@ -1274,7 +1274,7 @@ class JiBaJiBaPlayer {
         const panel = document.getElementById('settingsPanel');
         const overlay = document.getElementById('settingsPanelOverlay');
         
-        document.getElementById('settingsServerSelect').value = this.currentServer || '10.126.126.15';
+        document.getElementById('settingsServerSelect').value = this.currentServer || '10.126.126.10';
         document.getElementById('settingsCheckOnline').checked = this.checkOnlineBeforeConnect;
         document.getElementById('settingsRememberChannel').checked = this.rememberChannel || false;
         document.getElementById('settingsAutoChannel').value = this.autoChannel || '';

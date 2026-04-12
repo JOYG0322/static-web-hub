@@ -23,7 +23,7 @@ const ICE_SERVERS = [
 ];
 
 function getWhepUrl(stream) {
-    return `http://10.126.126.15:1985/rtc/v1/whep/?app=live&stream=${stream}`;
+    return `http://10.126.126.10:1985/rtc/v1/whep/?app=live&stream=${stream}`;
 }
 
 function isMobileDevice() {
@@ -328,7 +328,7 @@ let streamStatus = {};
 
 async function _checkStreamStatus() {
     try {
-        const response = await fetch('http://10.126.126.15:1985/api/v1/streams/');
+        const response = await fetch('http://10.126.126.10:1985/api/v1/streams/');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         

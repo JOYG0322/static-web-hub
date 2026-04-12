@@ -2,7 +2,7 @@
     class StreamStatusManager {
         constructor() {
             this.status = {};
-            this.server = '10.126.126.15';
+            this.server = '10.126.126.10';
             this.pollingInterval = null;
             this.callbacks = [];
         }
