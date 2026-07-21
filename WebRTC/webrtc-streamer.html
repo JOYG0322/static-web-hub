@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC 推流控制台</title>
+    <link rel="stylesheet" href="css/webrtc-streamer.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo-area">
+                <div class="logo-icon">📡</div>
+                <div class="logo-text">
+                    <h1>WebRTC 推流</h1>
+                    <span>Live Streaming Console</span>
+                </div>
+            </div>
+            <div class="status-pill" id="statusPill">
+                <span class="status-dot idle" id="statusDot"></span>
+                <span id="statusText">待机中</span>
+                <span id="streamTimer" style="display:none;font-family:var(--font-mono);margin-left:4px;"></span>
+            </div>
+        </header>
+
+        <section class="video-section">
+            <div class="video-preview-wrapper" id="videoWrapper">
+                <video id="previewVideo" autoplay playsinline muted></video>
+                <div class="video-placeholder" id="videoPlaceholder">
+                    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="8" y="14" width="48" height="36" rx="6" stroke="currentColor"/>
+                        <circle cx="32" cy="32" r="9" stroke="currentColor"/>
+                        <circle cx="32" cy="32" r="3" fill="currentColor"/>
+                    </svg>
+                    <span>等待视频源...</span>
+                </div>
+                <div class="video-overlay" id="videoOverlay"></div>
+            </div>
+            <div class="stats-strip" id="statsStrip">
+                <div class="stat-item"><div class="stat-value" id="statBitrate">--</div><div class="stat-label">码率 kbps</div></div>
+                <div class="stat-item"><div class="stat-value" id="statFps">--</div><div class="stat-label">帧率</div></div>
+                <div class="stat-item"><div class="stat-value" id="statResolution">--</div><div class="stat-label">分辨率</div></div>
+                <div class="stat-item"><div class="stat-value" id="statPacketLoss">--</div><div class="stat-label">丢包率</div></div>
+                <div class="stat-item"><div class="stat-value" id="statRtt">--</div><div class="stat-label">RTT ms</div></div>
+                <div class="stat-item"><div class="stat-value" id="statIceState">--</div><div class="stat-label">ICE状态</div></div>
+            </div>
+        </section>
+
+        <aside class="control-section">
+            <div class="card" id="cardServer">
+                <div class="card-header" onclick="toggleCard('cardServer')">
+                    <span class="card-title"><span class="icon-dot"></span>服务器配置</span>
+                    <span class="chevron" id="chevron-cardServer">▾</span>
+                </div>
+                <div class="card-body" id="body-cardServer">
+                    <label>协议模式</label>
+                    <select id="protocolMode" onchange="onProtocolChange()">
+                        <option value="whip">WHIP (自动 HTTP POST)</option>
+                        <option value="manual">手动 SDP 交换</option>
+                    </select>
+                    <div style="margin-top:10px;">
+                        <label>WHIP / 服务器 URL</label>
+                        <input type="url" id="serverUrl" placeholder="http://10.126.126.10:1985/rtc/v1/whip/" value="http://10.126.126.10:1985/rtc/v1/whip/" list="serverUrlPresets" autocomplete="off">
+                        <datalist id="serverUrlPresets">
+                            <option value="http://10.126.126.10:1985/rtc/v1/whip/">
+                            <option value="http://10.126.126.10:8080/rtc/v1/whip/">
+                            <option value="http://10.126.126.10:1985/rtc/v1/whip/">
+                            <option value="https://live.example.com/whip/endpoint">
+                            <option value="http://localhost:1985/rtc/v1/whip/">
+                            <option value="http://localhost:8080/rtc/v1/whip/">
+                        </datalist>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <label>流密钥 / 流名称 (可选)</label>
+                        <input type="text" id="streamKey" placeholder="live/stream-key" value="">
+                    </div>
+                    <div style="margin-top:8px;">
+                        <label>Authorization 头 (可选，用于认证)</label>
+                        <input type="text" id="authHeader" placeholder="Bearer your-token" value="">
+                    </div>
+                    <div id="manualSdpSection" style="display:none;margin-top:10px;">
+                        <label>本地 SDP Offer (自动生成，复制到服务器)</label>
+                        <textarea id="localSdpDisplay" readonly placeholder="点击生成后自动显示..."></textarea>
+                        <label style="margin-top:8px;">服务器返回的 SDP Answer (粘贴到此处)</label>
+                        <textarea id="remoteSdpInput" placeholder="粘贴服务器返回的 SDP Answer..."></textarea>
+                        <button class="btn btn-outline btn-sm btn-block" style="margin-top:6px;" onclick="applyRemoteSdp()">应用 Remote SDP</button>
+                    </div>
+                    <details style="margin-top:10px;">
+                        <summary style="cursor:pointer;font-size:0.72rem;color:var(--text-muted);font-weight:600;letter-spacing:0.03em;">ICE 服务器配置</summary>
+                        <textarea id="iceServersConfig" style="margin-top:6px;min-height:60px;font-size:0.7rem;">[
+                {"urls":"stun:stun.l.google.com:19302"}
+              ]</textarea>
+                        <span class="form-hint">JSON 格式的 ICE 服务器列表</span>
+                    </details>
+                </div>
+            </div>
+
+            <div class="card" id="cardSource">
+                <div class="card-header" onclick="toggleCard('cardSource')">
+                    <span class="card-title"><span class="icon-dot"></span>视频源设置</span>
+                    <span class="chevron" id="chevron-cardSource">▾</span>
+                </div>
+                <div class="card-body" id="body-cardSource">
+                    <label>视频源类型</label>
+                    <select id="sourceType" onchange="onSourceTypeChange()">
+                        <option value="screen" selected>屏幕共享</option>
+                        <option value="camera">摄像头</option>
+                    </select>
+                    <div id="cameraSettings">
+                        <div style="margin-top:8px;">
+                            <label>摄像头设备</label>
+                            <select id="cameraDevice"></select>
+                        </div>
+                    </div>
+                    <div id="screenSettings" style="display:none;">
+                        <div style="margin-top:8px;">
+                            <label>屏幕共享音频</label>
+                            <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+                                <label class="toggle-switch"><input type="checkbox" id="screenAudio"><span class="toggle-slider"></span></label>
+                                <span style="font-size:0.75rem;color:var(--text-muted);">捕获系统音频 (需浏览器支持)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <label>视频分辨率</label>
+                        <select id="resolution">
+                            <option value="3840x2160">4K (3840×2160)</option>
+                            <option value="1920x1080" selected>1080p (1920×1080)</option>
+                            <option value="1280x720">720p (1280×720)</option>
+                            <option value="854x480">480p (854×480)</option>
+                            <option value="640x360">360p (640×360)</option>
+                        </select>
+                    </div>
+                    <div class="form-row" style="margin-top:8px;">
+                        <div>
+                            <label>帧率</label>
+                            <select id="frameRate">
+                                <option value="60">60 fps</option>
+                                <option value="30" selected>30 fps</option>
+                                <option value="24">24 fps</option>
+                                <option value="15">15 fps</option>
+                                <option value="10">10 fps</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>视频码率上限 (kbps)</label>
+                            <input type="number" id="maxBitrate" value="4000" min="100" max="50000" step="100">
+                        </div>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <label>视频编码器优先级</label>
+                        <select id="codecPreference">
+                            <option value="h264">H.264 (优先)</option>
+                            <option value="vp8">VP8</option>
+                            <option value="vp9">VP9</option>
+                            <option value="auto">自动</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" id="cardAudio">
+                <div class="card-header" onclick="toggleCard('cardAudio')">
+                    <span class="card-title"><span class="icon-dot"></span>音频设置</span>
+                    <span class="chevron" id="chevron-cardAudio">▾</span>
+                </div>
+                <div class="card-body" id="body-cardAudio">
+                    <label>音频设备</label>
+                    <select id="audioDevice"></select>
+                    <div style="margin-top:8px;">
+                        <label>音频码率 (kbps)</label>
+                        <input type="number" id="audioBitrate" value="128" min="16" max="512" step="8">
+                    </div>
+                    <div style="margin-top:8px;display:flex;align-items:center;gap:10px;">
+                        <label class="toggle-switch"><input type="checkbox" id="audioEnabled" checked><span class="toggle-slider"></span></label>
+                        <span style="font-size:0.75rem;">启用音频推流</span>
+                    </div>
+                    <div style="margin-top:8px;display:flex;align-items:center;gap:10px;" id="echoCancellationRow">
+                        <label class="toggle-switch"><input type="checkbox" id="echoCancellation" checked><span class="toggle-slider"></span></label>
+                        <span style="font-size:0.75rem;">回声消除</span>
+                    </div>
+                    <div style="margin-top:6px;display:flex;align-items:center;gap:10px;" id="noiseSuppressionRow">
+                        <label class="toggle-switch"><input type="checkbox" id="noiseSuppression" checked><span class="toggle-slider"></span></label>
+                        <span style="font-size:0.75rem;">降噪</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="border:1px solid var(--accent);box-shadow:0 0 16px var(--accent-glow);">
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-primary btn-block" id="btnStart" onclick="startStreaming()" style="flex:1;">▶ 开始推流</button>
+                    <button class="btn btn-danger btn-block" id="btnStop" onclick="stopStreaming()" style="flex:1;display:none;">⏹ 停止推流</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                    <label class="toggle-switch"><input type="checkbox" id="autoReconnect"><span class="toggle-slider"></span></label>
+                    <span style="font-size:0.7rem;color:var(--text-muted);">断线自动重连</span>
+                </div>
+            </div>
+
+            <div class="card" id="cardLog">
+                <div class="card-header" onclick="toggleCard('cardLog')">
+                    <span class="card-title"><span class="icon-dot"></span>事件日志</span>
+                    <span class="chevron" id="chevron-cardLog">▾</span>
+                </div>
+                <div class="card-body" id="body-cardLog">
+                    <div class="log-container" id="logContainer"></div>
+                    <button class="btn btn-outline btn-sm btn-block" style="margin-top:8px;" onclick="clearLogs()">清空日志</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/webrtc-streamer.js"></script>
+</body>
+</html>

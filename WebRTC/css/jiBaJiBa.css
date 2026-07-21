@@ -25,7 +25,37 @@ body {
     color: var(--text-main);
     font-family: "Segoe UI", sans-serif;
 }
-.container { display: flex; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; }
+/* 语义化 HTML 元素基础样式 */
+main, section, aside {
+    display: block;
+}
+
+.main-container {
+    display: flex;
+    gap: 18px;
+    margin-top: 8px;
+    height: calc(100vh - 70px);
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+
+.video-section {
+    flex: 3;
+    display: flex;
+    min-width: 300px;
+    min-height: 0;
+    max-height: 100%;
+}
+
+.channel-sidebar {
+    flex: 1;
+    min-width: 220px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    max-height: 100%;
+}
 .title_ { display: flex; align-items: center; font-size: 26px; font-weight: bold; margin-left: auto; }
 .title_ img, .title_ svg { height: 38px; margin-right: 10px; border-radius: 8px; transition: transform 0.2s ease; }
 .title_ img:hover, .title_ svg:hover { transform: scale(1.15); cursor: pointer; }
@@ -500,14 +530,7 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 .button_s:hover { background: #33b6e8; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-.main_ {
-    display: flex;
-    gap: 18px;
-    margin-top: 8px;
-    height: calc(100vh - 70px);
-    flex-wrap: nowrap;
-    overflow: hidden;
-}
+/* .main_ 已合并到 .main-container */
 .videoContainer {
     flex: 3;
     min-width: 300px;
@@ -727,15 +750,7 @@ video { flex: 1; min-height: 0; width: 100%; object-fit: contain; border-radius:
 }
 .auto-channel-select:hover { background: #33b6e8; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 .auto-channel-select:disabled { opacity: 0.5; cursor: not-allowed; }
-.buttons {
-    flex: 1;
-    min-width: 220px;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    max-height: 100%;
-}
+/* .buttons 已重命名为 .channel-sidebar */
 .section-title {
     font-size: 14px;
     color: var(--text-main);
@@ -1102,7 +1117,7 @@ video { flex: 1; min-height: 0; width: 100%; object-fit: contain; border-radius:
     color: #00ff00;
 }
 @media (max-width: 800px) {
-    .main_ { flex-direction: column; }
+    .main-container { flex-direction: column; }
     .videoContainer { height: 300px; }
     #fullscreenBtn { display: none; }
     .fullscreen-sidebar { width: 50px; }
