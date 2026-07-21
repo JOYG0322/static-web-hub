@@ -552,12 +552,19 @@
             throw new Error('无可用媒体流');
         }
         const pc = createPeerConnection();
+        let videoTracksAdded = 0, audioTracksAdded = 0;
         localStream.getTracks().forEach(track => {
+            addLog(`轨道检查: kind=${track.kind} readyState=${track.readyState} muted=${track.muted} label="${track.label || '?'}"`, 'info');
             if (track.readyState === 'live') {
                 pc.addTrack(track, localStream);
                 addLog(`添加轨道: ${track.kind} (${track.label || '未命名'})`, 'info');
+                if (track.kind === 'video') videoTracksAdded++;
+                if (track.kind === 'audio') audioTracksAdded++;
+            } else {
+                addLog(`跳过非活跃轨道: ${track.kind} readyState=${track.readyState}`, 'warn');
             }
         });
+        addLog(`轨道统计: 视频=${videoTracksAdded} 音频=${audioTracksAdded}`, 'info');
         const codecPref = domCodecPreference.value;
         if (codecPref !== 'auto') {
             try {
@@ -614,19 +621,43 @@
         if (!serverUrl) {
             throw new Error('请输入服务器URL');
         }
-        if (streamKey && !serverUrl.includes(streamKey)) {
-            serverUrl = serverUrl.replace(/\/$/, '') + '/' + streamKey.replace(/^\//, '');
+        if (streamKey) {
+            // 使用查询参数 ?app=live&stream=KEY 指定流名
+            const base = serverUrl.replace(/\/$/, '').replace(/\?.*$/, '');
+            serverUrl = base + '?app=live&stream=' + encodeURIComponent(streamKey);
         }
+
+        // 检测混合内容问题：HTTPS 页面不允许请求 HTTP 资源
+        const pageIsHttps = location.protocol === 'https:';
+        const urlIsHttp = serverUrl.toLowerCase().startsWith('http://');
+        if (pageIsHttps && urlIsHttp) {
+            addLog('检测到混合内容风险: HTTPS 页面无法请求 HTTP 端点，浏览器将阻止此请求', 'warn');
+            showToast('HTTPS 页面无法连接 HTTP WHIP 端点，请使用 HTTPS URL', 'warn');
+        }
+
         addLog(`WHIP请求: POST ${serverUrl}`, 'info');
         const headers = { 'Content-Type': 'application/sdp' };
         if (authHeader) {
             headers['Authorization'] = authHeader;
         }
-        const response = await fetch(serverUrl, {
-            method: 'POST',
-            headers,
-            body: sdpOffer,
-        });
+
+        let response;
+        try {
+            response = await fetch(serverUrl, {
+                method: 'POST',
+                headers,
+                body: sdpOffer,
+            });
+        } catch (fetchError) {
+            let hint = '';
+            if (pageIsHttps && urlIsHttp) {
+                hint = '\n原因: HTTPS 页面禁止请求 HTTP 端点（混合内容策略）。请将 WHIP URL 改为 HTTPS，或通过 HTTP 访问本页面。';
+            } else if (fetchError.message === 'Failed to fetch') {
+                hint = '\n可能原因: 目标服务器未运行、网络不通、或被 CORS 策略阻止。';
+            }
+            throw new Error('网络请求失败: ' + fetchError.message + hint);
+        }
+
         if (!response.ok) {
             const errorBody = await response.text().catch(() => '');
             throw new Error(`WHIP请求失败: HTTP ${response.status} ${response.statusText}${errorBody ? ' - ' + errorBody : ''}`);
@@ -639,6 +670,18 @@
         }
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         addLog('Remote SDP已设置', 'success');
+
+        // 诊断：提取 answer 中协商的视频编码器
+        const videoCodecMatch = answerSdp.match(/m=video[\s\S]*?a=rtpmap:\d+\s+(\S+)/);
+        if (videoCodecMatch) {
+            addLog(`协商视频编码: ${videoCodecMatch[1]}`, 'info');
+        }
+        // 诊断：检查收发器方向
+        pc.getTransceivers().forEach((t, i) => {
+            const kind = t.sender?.track?.kind || t.receiver?.track?.kind || '?';
+            addLog(`收发器[${i}]: ${kind} direction=${t.direction} currentDirection=${t.currentDirection || '?'}`, 'info');
+        });
+
         updateStatus('connecting');
         setVideoWrapperState('connecting');
     }
@@ -709,25 +752,26 @@
 
     function startStatsMonitoring() {
         if (statsInterval) clearInterval(statsInterval);
+        // 用外部变量存储上次统计值，getStats() 每次返回的是新对象
+        let prevVideoBytes = 0, prevVideoTimestamp = 0;
         statsInterval = setInterval(async () => {
             if (!peerConnection || !isStreaming) return;
             try {
                 const stats = await peerConnection.getStats();
                 let bitrate = 0, fps = 0, resolution = '--', packetLoss = 0, rtt = 0;
                 let totalPacketsLost = 0, totalPackets = 0;
-                const nowMs = performance.now();
                 stats.forEach(report => {
                     if (report.type === 'outbound-rtp' && report.kind === 'video') {
                         if (report.bytesSent !== undefined && report.timestamp) {
-                            if (report._prevBytes && report._prevTimestamp) {
-                                const bytesDelta = report.bytesSent - report._prevBytes;
-                                const timeDelta = (report.timestamp - report._prevTimestamp) / 1000;
+                            if (prevVideoBytes > 0 && prevVideoTimestamp > 0) {
+                                const bytesDelta = report.bytesSent - prevVideoBytes;
+                                const timeDelta = (report.timestamp - prevVideoTimestamp) / 1000;
                                 if (timeDelta > 0) {
                                     bitrate = Math.round((bytesDelta * 8) / timeDelta / 1000);
                                 }
                             }
-                            report._prevBytes = report.bytesSent;
-                            report._prevTimestamp = report.timestamp;
+                            prevVideoBytes = report.bytesSent;
+                            prevVideoTimestamp = report.timestamp;
                         }
                         if (report.framesPerSecond !== undefined) fps = Math.round(report.framesPerSecond);
                         if (report.frameWidth && report.frameHeight) resolution = `${report.frameWidth}×${report.frameHeight}`;
