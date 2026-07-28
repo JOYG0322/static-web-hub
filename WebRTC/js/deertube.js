@@ -442,18 +442,20 @@ function connect(streamName) {
         // 根据streamName设置对应的头像
         const avatarMap = {
             'CMHH': 'cmhh',
-            'JOYG': 'joyg', 
+            'JOYG': 'joyg',
             'PL': 'pl',
             'LJY': 'ljy',
-            'AAA': 'aaa'
+            'AAA': 'aaa',
+            'KSK': 'ksk'
         };
-        
+
         const displayNameMap = {
             'CMHH': 'Chaoji_Mouse',
             'JOYG': 'JOYG',
             'PL': 'Pure1ove',
             'LJY': 'DJ_Hero',
-            'AAA': 'REDguard'
+            'AAA': 'REDguard',
+            'KSK': 'KSK'
         };
         
         const avatarName = avatarMap[streamName];
