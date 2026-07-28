@@ -13,7 +13,8 @@
 
         async fetchStatus() {
             try {
-                const response = await fetch(`http://${this.server}:1985/api/v1/streams/`);
+                const response = await this._fetchWithTimeout(
+                    `http://${this.server}:1985/api/v1/streams/`, {}, 6000);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 
@@ -56,7 +57,8 @@
 
         async checkSingleStatus(streamName) {
             try {
-                const response = await fetch(`http://${this.server}:1985/api/v1/streams/${streamName}`);
+                const response = await this._fetchWithTimeout(
+                    `http://${this.server}:1985/api/v1/streams/${streamName}`, {}, 6000);
                 if (!response.ok) return false;
                 const data = await response.json();
                 return data.code === 0 && data.stream && data.stream.publish && data.stream.publish.active;
@@ -71,6 +73,17 @@
             }
             this.fetchStatus();
             this.pollingInterval = setInterval(() => this.fetchStatus(), interval);
+        }
+
+        /** 带超时的 fetch，轮询/单次状态检测都使用，避免服务器无响应时请求挂起 */
+        async _fetchWithTimeout(url, opts, timeoutMs) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                return await fetch(url, { ...opts, signal: controller.signal });
+            } finally {
+                clearTimeout(timer);
+            }
         }
 
         stopPolling() {
